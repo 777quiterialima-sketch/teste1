@@ -3,25 +3,13 @@ require_once __DIR__ . '/db.php';
 
 function fetchPriceForProduct(array $product, PDO $pdo): array
 {
-    $url = $product['url'];
-    $context = stream_context_create([
-        'http' => [
-            'method' => 'GET',
-            'timeout' => 15,
-            'header' => [
-                'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118 Safari/537.36'
-            ]
-        ]
-    ]);
+    $download = downloadProductPage($product['url']);
 
-    $html = @file_get_contents($url, false, $context);
-
-    if ($html === false) {
-        return [
-            'success' => false,
-            'message' => 'Não foi possível acessar a página do produto.'
-        ];
+    if (!($download['success'] ?? false)) {
+        return $download;
     }
+
+    $html = $download['html'];
 
     $extraction = extractPriceFromHtml($product, $html);
     if (!($extraction['success'] ?? false)) {
@@ -114,9 +102,12 @@ function extractCasasBahiaPrice(string $html): array
         ];
     }
 
+    $encoding = mb_detect_encoding($html, ['UTF-8', 'ISO-8859-1', 'WINDOWS-1252'], true) ?: 'UTF-8';
+    $normalizedHtml = mb_convert_encoding($html, 'HTML-ENTITIES', $encoding);
+
     $dom = new DOMDocument('1.0', 'UTF-8');
     $previousLibxmlSetting = libxml_use_internal_errors(true);
-    $dom->loadHTML($html);
+    $dom->loadHTML($normalizedHtml);
     libxml_clear_errors();
     libxml_use_internal_errors($previousLibxmlSetting);
 
@@ -124,24 +115,105 @@ function extractCasasBahiaPrice(string $html): array
     $nodeList = $xpath->query('//*[@id="product-price"]');
     $node = $nodeList !== false ? $nodeList->item(0) : null;
 
-    if (!$node) {
+    if ($node) {
+        $rawPrice = trim(preg_replace('/\s+/u', ' ', $node->textContent));
+
+        if ($rawPrice === '' && $node->hasAttribute('data-price')) {
+            $rawPrice = trim($node->getAttribute('data-price'));
+        }
+
+        if ($rawPrice === '' && $node->hasAttribute('content')) {
+            $rawPrice = trim($node->getAttribute('content'));
+        }
+
+        if ($rawPrice !== '') {
+            return [
+                'success' => true,
+                'rawPrice' => $rawPrice,
+            ];
+        }
+    }
+
+    $regexCandidates = [
+        '/id="product-price"[^>]*data-price="([^"]+)"/i',
+        "/id='product-price'[^>]*data-price='([^']+)'/i",
+        '/id="product-price"[^>]*content="([^"]+)"/i',
+        "/id='product-price'[^>]*content='([^']+)'/i",
+        '/id="product-price"[^>]*>([^<]+)/i',
+        "/id='product-price'[^>]*>([^<]+)/i",
+    ];
+
+    foreach ($regexCandidates as $pattern) {
+        if (preg_match($pattern, $html, $matches) && trim($matches[1]) !== '') {
+            return [
+                'success' => true,
+                'rawPrice' => trim($matches[1]),
+            ];
+        }
+    }
+
+    return [
+        'success' => false,
+        'message' => 'Não foi possível localizar o preço na página da Casas Bahia.'
+    ];
+}
+
+function downloadProductPage(string $url): array
+{
+    if (function_exists('curl_init')) {
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_TIMEOUT => 20,
+            CURLOPT_CONNECTTIMEOUT => 10,
+            CURLOPT_USERAGENT => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118 Safari/537.36',
+            CURLOPT_ENCODING => '',
+            CURLOPT_HTTPHEADER => [
+                'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            ],
+        ]);
+
+        $html = curl_exec($ch);
+        $error = curl_error($ch);
+        $statusCode = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+        curl_close($ch);
+
+        if ($html === false || $statusCode >= 400) {
+            return [
+                'success' => false,
+                'message' => 'Não foi possível acessar a página do produto.' . ($error ? ' Detalhes: ' . $error : ''),
+            ];
+        }
+
         return [
-            'success' => false,
-            'message' => 'Não foi possível localizar o preço na página da Casas Bahia.'
+            'success' => true,
+            'html' => $html,
         ];
     }
 
-    $rawPrice = trim($node->textContent);
+    $context = stream_context_create([
+        'http' => [
+            'method' => 'GET',
+            'timeout' => 20,
+            'header' => [
+                'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118 Safari/537.36',
+                'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            ],
+        ],
+    ]);
 
-    if ($rawPrice === '') {
+    $html = @file_get_contents($url, false, $context);
+
+    if ($html === false) {
         return [
             'success' => false,
-            'message' => 'Preço não encontrado no elemento com id "product-price".'
+            'message' => 'Não foi possível acessar a página do produto.'
         ];
     }
 
     return [
         'success' => true,
-        'rawPrice' => $rawPrice,
+        'html' => $html,
     ];
 }
