@@ -1,29 +1,74 @@
-# Monitor de preços em PHP
+# Monitor de preços (Python)
 
-Aplicação simples em PHP e SQLite para acompanhar o histórico de preços de produtos. Permite cadastrar páginas de produto, definir a loja onde o preço será capturado automaticamente e visualizar a evolução em tabela e gráfico.
+Aplicação web simples para cadastrar produtos, buscar o preço atual diretamente do site escolhido e acompanhar o histórico de variação. Foi reescrita em Python com Flask para oferecer mais flexibilidade e facilidade de manutenção.
+
+## Recursos
+
+- Cadastro de produtos com URL e loja alvo (atualmente Casas Bahia).
+- Atualização manual do preço com captura automática do valor na página.
+- Histórico de preços armazenado em SQLite com visualização tabular.
+- Interface responsiva e amigável para desktop e mobile.
+- Script de linha de comando para atualizar todos os preços em lote.
 
 ## Requisitos
 
-- PHP 8.0 ou superior com extensões `pdo_sqlite` e `sqlite3` habilitadas.
-- Permissão de escrita no diretório `data/` (criado automaticamente na primeira execução).
+- Python 3.11 ou superior.
+- Dependências listadas em `requirements.txt`.
+
+Instale-as com:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
 
 ## Como usar
 
-1. Coloque todos os arquivos em um servidor compatível com PHP (Apache, Nginx + PHP-FPM ou o servidor embutido do PHP).
-2. Acesse `index.php` no navegador.
-3. Cadastre um produto informando:
-   - Nome amigável para identificação.
-   - URL completa da página de produto.
-   - Loja onde a coleta acontecerá (por enquanto, **Casas Bahia**, que usa o elemento com id `product-price`).
-4. Clique em **Atualizar agora** para que o sistema faça o download da página, extraia o preço de acordo com o identificador configurado para a loja e salve no histórico.
-5. Abra **Ver histórico** para consultar a lista de coletas e um gráfico com a evolução do preço.
+1. Inicialize o banco e execute a aplicação:
+   ```bash
+   flask --app app run --debug
+   ```
+   Por padrão ela ficará disponível em `http://127.0.0.1:5000`.
 
-## Extensões futuras
+2. Abra o endereço no navegador, cadastre um produto (por exemplo, um link da Casas Bahia) e clique em **Atualizar agora** para capturar o preço.
 
-- Outras lojas podem ser adicionadas definindo seletores específicos para cada página.
-- É possível habilitar novamente o campo de expressão regular para cenários personalizados.
+3. Consulte o histórico completo clicando em **Ver histórico**.
 
-## Segurança
+### Atualização pela linha de comando
 
-- As expressões regulares são validadas antes de salvar.
-- O agente de coleta usa um `User-Agent` comum para reduzir bloqueios, mas recomenda-se respeitar os termos de uso do site monitorado.
+O script `fetch_price_cli.py` permite atualizar todos os produtos de uma vez ou apenas um produto específico:
+
+```bash
+python fetch_price_cli.py           # atualiza todos
+python fetch_price_cli.py --product-id 1  # atualiza apenas o produto 1
+```
+
+Os valores capturados são salvos automaticamente no histórico.
+
+## Sobre a captura de preços
+
+Para a loja Casas Bahia o sistema tenta, nesta ordem:
+
+1. Ler o conteúdo do elemento com `id="product-price"`.
+2. Buscar metatags (`og:price:amount`, `product:price:amount`, `itemprop=price`).
+3. Ler objetos JSON-LD com ofertas e preço numérico.
+4. Examinar scripts embutidos que contenham valores como `sellingPrice`.
+
+Sempre que um valor bruto é encontrado ele é normalizado para o formato numérico brasileiro e armazenado junto com o histórico.
+
+> **Observação:** Este ambiente não possui acesso à internet. Para testar a captura de preços utilize a aplicação em uma máquina com conexão externa.
+
+## Estrutura do projeto
+
+```
+app.py               # Aplicação Flask
+price_fetcher.py     # Download e extração de preços por loja
+fetch_price_cli.py   # Script de linha de comando
+database.py          # Funções utilitárias para o SQLite
+templates/           # HTML renderizado pelo Flask
+static/              # Arquivos de estilo
+requirements.txt     # Dependências Python
+```
+
+O banco SQLite (`price_monitor.db`) é criado automaticamente ao iniciar a aplicação.

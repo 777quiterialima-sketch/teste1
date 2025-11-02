@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block title %}Histórico - {{ product['name'] }}{% endblock %}
+
+{% block content %}
+<a class="button secondary" href="{{ url_for('index') }}">Voltar</a>
+
+<section class="card">
+    <h2>{{ product['name'] }}</h2>
+    <p class="small">Loja: {{ store_meta['label'] }}</p>
+    <p class="small"><a href="{{ product['url'] }}" target="_blank" rel="noopener">Abrir página</a></p>
+</section>
+
+<section class="card">
+    <h3>Histórico de preços</h3>
+    {% if not entries %}
+        <div class="empty">Nenhuma atualização registrada ainda.</div>
+    {% else %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Preço</th>
+                    <th>Valor bruto</th>
+                    <th>Capturado em</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for entry in entries %}
+                <tr>
+                    <td>{{ entry['price']|currency }}</td>
+                    <td>{{ entry['raw_value'] }}</td>
+                    <td>{{ parse_datetime(entry['fetched_at']).strftime('%d/%m/%Y %H:%M') }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+</section>
+{% endblock %}
