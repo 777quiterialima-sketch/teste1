@@ -11,8 +11,22 @@ try {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
         url TEXT NOT NULL,
-        price_pattern TEXT NOT NULL
+        price_pattern TEXT NOT NULL,
+        store TEXT NOT NULL DEFAULT "casasbahia"
     )');
+
+    $columns = $pdo->query('PRAGMA table_info(products)')->fetchAll(PDO::FETCH_ASSOC);
+    $hasStoreColumn = false;
+    foreach ($columns as $column) {
+        if (isset($column['name']) && $column['name'] === 'store') {
+            $hasStoreColumn = true;
+            break;
+        }
+    }
+
+    if (!$hasStoreColumn) {
+        $pdo->exec('ALTER TABLE products ADD COLUMN store TEXT NOT NULL DEFAULT "casasbahia"');
+    }
     $pdo->exec('CREATE TABLE IF NOT EXISTS price_history (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         product_id INTEGER NOT NULL,

@@ -23,22 +23,12 @@ function fetchPriceForProduct(array $product, PDO $pdo): array
         ];
     }
 
-    $pattern = $product['price_pattern'];
-    if (@preg_match($pattern, '') === false) {
-        return [
-            'success' => false,
-            'message' => 'Expressão regular de preço inválida.'
-        ];
+    $extraction = extractPriceFromHtml($product, $html);
+    if (!($extraction['success'] ?? false)) {
+        return $extraction;
     }
 
-    if (!preg_match($pattern, $html, $matches)) {
-        return [
-            'success' => false,
-            'message' => 'Não foi possível localizar o preço com a expressão informada.'
-        ];
-    }
-
-    $rawPrice = $matches[1] ?? $matches[0];
+    $rawPrice = $extraction['rawPrice'];
     $normalized = str_replace(["\xC2\xA0", ' '], '', $rawPrice);
     $normalized = str_replace(',', '.', $normalized);
     $normalized = preg_replace('/[^0-9.]/', '', $normalized);
@@ -75,5 +65,83 @@ function fetchPriceForProduct(array $product, PDO $pdo): array
         'message' => 'Preço atualizado com sucesso.',
         'price' => $price,
         'currency' => $currency
+    ];
+}
+
+function extractPriceFromHtml(array $product, string $html): array
+{
+    $store = $product['store'] ?? '';
+
+    if ($store === 'casasbahia') {
+        return extractCasasBahiaPrice($html);
+    }
+
+    $pattern = $product['price_pattern'] ?? '';
+
+    if ($pattern === '') {
+        return [
+            'success' => false,
+            'message' => 'Nenhuma regra de captura de preço configurada para este produto.'
+        ];
+    }
+
+    if (@preg_match($pattern, '') === false) {
+        return [
+            'success' => false,
+            'message' => 'Expressão regular de preço inválida.'
+        ];
+    }
+
+    if (!preg_match($pattern, $html, $matches)) {
+        return [
+            'success' => false,
+            'message' => 'Não foi possível localizar o preço com a expressão informada.'
+        ];
+    }
+
+    return [
+        'success' => true,
+        'rawPrice' => $matches[1] ?? $matches[0],
+    ];
+}
+
+function extractCasasBahiaPrice(string $html): array
+{
+    if (!class_exists('DOMDocument')) {
+        return [
+            'success' => false,
+            'message' => 'Extensão DOM não disponível para processar a página da Casas Bahia.'
+        ];
+    }
+
+    $dom = new DOMDocument('1.0', 'UTF-8');
+    $previousLibxmlSetting = libxml_use_internal_errors(true);
+    $dom->loadHTML($html);
+    libxml_clear_errors();
+    libxml_use_internal_errors($previousLibxmlSetting);
+
+    $xpath = new DOMXPath($dom);
+    $nodeList = $xpath->query('//*[@id="product-price"]');
+    $node = $nodeList !== false ? $nodeList->item(0) : null;
+
+    if (!$node) {
+        return [
+            'success' => false,
+            'message' => 'Não foi possível localizar o preço na página da Casas Bahia.'
+        ];
+    }
+
+    $rawPrice = trim($node->textContent);
+
+    if ($rawPrice === '') {
+        return [
+            'success' => false,
+            'message' => 'Preço não encontrado no elemento com id "product-price".'
+        ];
+    }
+
+    return [
+        'success' => true,
+        'rawPrice' => $rawPrice,
     ];
 }

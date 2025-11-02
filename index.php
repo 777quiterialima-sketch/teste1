@@ -9,6 +9,17 @@ $formValues = $_SESSION['form_values'] ?? [];
 unset($_SESSION['flash_message'], $_SESSION['flash_type'], $_SESSION['form_errors'], $_SESSION['form_values']);
 
 $products = $pdo->query('SELECT * FROM products ORDER BY name')->fetchAll(PDO::FETCH_ASSOC);
+$storeOptions = [
+    'casasbahia' => [
+        'label' => 'Casas Bahia',
+        'helper' => 'O preço será lido do elemento com id "product-price".'
+    ],
+];
+
+function getStoreLabel(string $storeKey, array $storeOptions): string
+{
+    return $storeOptions[$storeKey]['label'] ?? ucfirst($storeKey);
+}
 
 function getLatestPrices(PDO $pdo, int $productId): array
 {
@@ -37,7 +48,7 @@ function getLatestPrices(PDO $pdo, int $productId): array
         .btn-secondary { background: #4a5568; }
         form { margin-top: 2rem; background: #fff; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         label { display: block; margin-bottom: 0.25rem; font-weight: bold; }
-        input[type="text"], textarea { width: 100%; padding: 0.5rem; border: 1px solid #cbd5e0; border-radius: 4px; margin-bottom: 1rem; font-size: 1rem; }
+        input[type="text"], textarea, select { width: 100%; padding: 0.5rem; border: 1px solid #cbd5e0; border-radius: 4px; margin-bottom: 1rem; font-size: 1rem; }
         input[type="submit"] { background: #2b6cb0; color: #fff; border: none; padding: 0.75rem 1.25rem; border-radius: 4px; cursor: pointer; font-size: 1rem; }
         input[type="submit"]:hover { background: #2c5282; }
         .empty-state { background: #fff; padding: 1.5rem; border-radius: 8px; margin-top: 1.5rem; }
@@ -108,6 +119,7 @@ function getLatestPrices(PDO $pdo, int $productId): array
                     <tr>
                         <td>
                             <strong><?php echo htmlspecialchars($product['name']); ?></strong><br>
+                            <span class="small">Loja: <?php echo htmlspecialchars(getStoreLabel($product['store'] ?? '', $storeOptions)); ?></span><br>
                             <a class="small" href="<?php echo htmlspecialchars($product['url']); ?>" target="_blank" rel="noopener">Abrir página</a>
                         </td>
                         <td>
@@ -157,8 +169,20 @@ function getLatestPrices(PDO $pdo, int $productId): array
         <label for="url">URL da página do produto</label>
         <input type="text" id="url" name="url" required placeholder="https://exemplo.com/produto" value="<?php echo htmlspecialchars($formValues['url'] ?? ''); ?>">
 
-        <label for="pattern">Expressão regular para localizar o preço <span class="small">(use um grupo de captura se precisar limpar o valor)</span></label>
-        <textarea id="pattern" name="price_pattern" rows="3" required placeholder="/R\\$\s*([0-9.,]+)/"><?php echo htmlspecialchars($formValues['price_pattern'] ?? ''); ?></textarea>
+        <label for="store">Loja</label>
+        <select id="store" name="store" required>
+            <option value="">Selecione uma loja</option>
+            <?php foreach ($storeOptions as $key => $option): ?>
+                <option value="<?php echo htmlspecialchars($key); ?>" <?php echo (($formValues['store'] ?? '') === $key) ? 'selected' : ''; ?>><?php echo htmlspecialchars($option['label']); ?></option>
+            <?php endforeach; ?>
+        </select>
+        <?php if (!empty($formValues['store']) && isset($storeOptions[$formValues['store']]['helper'])): ?>
+            <p class="small"><?php echo htmlspecialchars($storeOptions[$formValues['store']]['helper']); ?></p>
+        <?php else: ?>
+            <p class="small">Casas Bahia: leitura automática pelo elemento com id "product-price".</p>
+        <?php endif; ?>
+
+        <input type="hidden" name="price_pattern" value="<?php echo htmlspecialchars($formValues['price_pattern'] ?? ''); ?>">
 
         <input type="submit" value="Cadastrar produto">
     </form>
