@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+
+{% block title %}Monitor de preços{% endblock %}
+
+{% block content %}
+<section class="card">
+    <h2>Produtos monitorados</h2>
+    {% if not products %}
+        <div class="empty">
+            Nenhum produto cadastrado ainda. Adicione o primeiro usando o formulário abaixo.
+        </div>
+    {% else %}
+        <div class="table-wrapper">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Produto</th>
+                        <th>Preço atual</th>
+                        <th>Variação</th>
+                        <th>Atualizado em</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in products %}
+                        {% set history = histories.get(product['id'], []) %}
+                        {% set current = history|first %}
+                        {% set previous = history[1] if history|length > 1 else None %}
+                        {% if current and previous %}
+                            {% set diff = current['price'] - previous['price'] %}
+                            {% if diff > 0 %}
+                                {% set status = ('status-up', 'Subiu ' ~ diff|abs|currency) %}
+                            {% elif diff < 0 %}
+                                {% set status = ('status-down', 'Caiu ' ~ diff|abs|currency) %}
+                            {% else %}
+                                {% set status = ('status-flat', 'Sem variação') %}
+                            {% endif %}
+                        {% else %}
+                            {% set status = ('status-flat', 'Aguardando histórico') %}
+                        {% endif %}
+                        <tr>
+                            <td>
+                                <strong>{{ product['name'] }}</strong><br>
+                                {% set store_meta = stores.get(product['store'], {'label': product['store']}) %}
+                                <span class="small">Loja: {{ store_meta['label'] }}</span><br>
+                                <a class="small" href="{{ product['url'] }}" target="_blank" rel="noopener">Abrir página</a>
+                            </td>
+                            <td>
+                                {% if current %}
+                                    <strong>{{ current['price']|currency }}</strong>
+                                {% else %}
+                                    <span class="small">Sem dados</span>
+                                {% endif %}
+                            </td>
+                            <td><span class="{{ status[0] }}">{{ status[1] }}</span></td>
+                            <td>
+                                {% if current %}
+                                    <span class="small">{{ current['fetched_at']|datetime_br }}</span>
+                                {% else %}
+                                    <span class="small">Nunca atualizado</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a class="button" href="{{ url_for('fetch_now', product_id=product['id']) }}">Atualizar agora</a>
+                                <a class="button secondary" href="{{ url_for('history', product_id=product['id']) }}">Ver histórico</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+</section>
+
+<section class="card">
+    <h2>Adicionar novo produto</h2>
+    <form method="post" action="{{ url_for('create_product') }}" class="form-grid">
+        <div>
+            <label for="name">Nome do produto</label>
+            <input type="text" id="name" name="name" required>
+        </div>
+        <div>
+            <label for="url">URL</label>
+            <input type="url" id="url" name="url" placeholder="https://" required>
+        </div>
+        <div>
+            <label for="store">Loja</label>
+            <select id="store" name="store" required>
+                <option value="">Selecione</option>
+                {% for key, meta in stores.items() %}
+                    <option value="{{ key }}">{{ meta['label'] }}</option>
+                {% endfor %}
+            </select>
+            {% for key, meta in stores.items() %}
+                <p class="small"><strong>{{ meta['label'] }}:</strong> {{ meta['helper'] }}</p>
+            {% endfor %}
+        </div>
+        <div>
+            <button class="button" type="submit">Salvar produto</button>
+        </div>
+    </form>
+</section>
+{% endblock %}
