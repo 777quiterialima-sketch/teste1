@@ -134,6 +134,31 @@ function extractCasasBahiaPrice(string $html): array
         }
     }
 
+    $metaCandidates = [
+        "//meta[@property='og:price:amount']",
+        "//meta[@itemprop='price']",
+        "//meta[@name='twitter:data1']",
+    ];
+
+    foreach ($metaCandidates as $metaQuery) {
+        $metaList = $xpath->query($metaQuery);
+        if ($metaList !== false) {
+            foreach ($metaList as $metaNode) {
+                $content = trim($metaNode->getAttribute('content'));
+                if ($content === '' && $metaNode->hasAttribute('value')) {
+                    $content = trim($metaNode->getAttribute('value'));
+                }
+
+                if ($content !== '') {
+                    return [
+                        'success' => true,
+                        'rawPrice' => $content,
+                    ];
+                }
+            }
+        }
+    }
+
     $regexCandidates = [
         '/id="product-price"[^>]*data-price="([^"]+)"/i',
         "/id='product-price'[^>]*data-price='([^']+)'/i",
@@ -152,10 +177,112 @@ function extractCasasBahiaPrice(string $html): array
         }
     }
 
+    $jsonLdPrice = extractPriceFromJsonLd($xpath);
+    if ($jsonLdPrice !== null) {
+        return [
+            'success' => true,
+            'rawPrice' => $jsonLdPrice,
+        ];
+    }
+
+    $statePrice = extractPriceFromEmbeddedState($html);
+    if ($statePrice !== null) {
+        return [
+            'success' => true,
+            'rawPrice' => $statePrice,
+        ];
+    }
+
     return [
         'success' => false,
         'message' => 'Não foi possível localizar o preço na página da Casas Bahia.'
     ];
+}
+
+function extractPriceFromJsonLd(DOMXPath $xpath): ?string
+{
+    $scripts = $xpath->query('//script[@type="application/ld+json"]');
+    if ($scripts === false) {
+        return null;
+    }
+
+    foreach ($scripts as $script) {
+        $json = trim($script->textContent);
+        if ($json === '') {
+            continue;
+        }
+
+        $decoded = json_decode($json, true);
+        if ($decoded === null) {
+            $decoded = json_decode(preg_replace('/,[\s\r\n]*}/', '}', $json), true);
+        }
+
+        if ($decoded === null) {
+            continue;
+        }
+
+        $price = findPriceInMixedData($decoded);
+        if ($price !== null) {
+            return $price;
+        }
+    }
+
+    return null;
+}
+
+function extractPriceFromEmbeddedState(string $html): ?string
+{
+    $patterns = [
+        '/"price"\s*:\s*"?([0-9]+[.,][0-9]{2})"?/i',
+        '/"sellingPrice"\s*:\s*"?([0-9]+[.,][0-9]{2})"?/i',
+        '/"salesPrice"\s*:\s*"?([0-9]+[.,][0-9]{2})"?/i',
+    ];
+
+    foreach ($patterns as $pattern) {
+        if (preg_match($pattern, $html, $matches)) {
+            return $matches[1];
+        }
+    }
+
+    return null;
+}
+
+function findPriceInMixedData($data): ?string
+{
+    if (is_array($data)) {
+        if (isset($data['price']) && $data['price'] !== '') {
+            return (string) $data['price'];
+        }
+
+        if (isset($data['offers'])) {
+            $offers = $data['offers'];
+            if (is_array($offers) && isset($offers['price']) && $offers['price'] !== '') {
+                return (string) $offers['price'];
+            }
+
+            if (is_array($offers)) {
+                foreach ($offers as $offer) {
+                    $price = findPriceInMixedData($offer);
+                    if ($price !== null) {
+                        return $price;
+                    }
+                }
+            }
+        }
+
+        foreach ($data as $value) {
+            $price = findPriceInMixedData($value);
+            if ($price !== null) {
+                return $price;
+            }
+        }
+    }
+
+    if (is_object($data)) {
+        return findPriceInMixedData((array) $data);
+    }
+
+    return null;
 }
 
 function downloadProductPage(string $url): array
