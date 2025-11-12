@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Planejamento Semanal - Trader Esportivo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="bg-light">
+  <div class="d-flex app-shell">
+    <aside class="sidebar text-white p-4 d-flex flex-column gap-4">
+      <div>
+        <div class="brand-name">Trader<span>Esportivo</span></div>
+        <p class="brand-tagline mb-0">Planejamento de bancas e entradas</p>
+      </div>
+      <nav class="nav flex-column nav-pills gap-2">
+        <a href="index.html" class="nav-link active">Dashboard</a>
+        <a href="cadastro.html" class="nav-link">Cadastrar jogos</a>
+        <a href="selecionados.html" class="nav-link">Jogos selecionados</a>
+        <a href="metodos.html" class="nav-link">Métodos</a>
+      </nav>
+      <div class="info-card">
+        <h2 class="h6 mb-3">Como usar</h2>
+        <ul class="mb-0 ps-3">
+          <li>Importe a planilha de jogos na página de cadastro.</li>
+          <li>Revise as partidas no dashboard e selecione as melhores oportunidades.</li>
+          <li>Selecione os métodos apenas nos jogos escolhidos.</li>
+        </ul>
+      </div>
+    </aside>
+
+    <main class="p-4 p-lg-5">
+      <div class="container-fluid px-0">
+        <header class="d-flex flex-column flex-lg-row align-items-lg-center justify-content-lg-between gap-3 mb-4">
+          <div>
+            <p class="page-subtitle mb-1">Painel de análise</p>
+            <h1 class="page-title h3 mb-2">Jogos importados</h1>
+            <p class="text-secondary mb-0">Visualize todos os jogos carregados do CSV, selecione os melhores e planeje suas entradas.</p>
+          </div>
+          <div class="d-flex flex-wrap gap-2">
+            <a href="selecionados.html" class="btn btn-outline-primary">Ver jogos selecionados</a>
+          </div>
+        </header>
+
+        <div class="row g-3 mb-4">
+          <div class="col-md-4">
+            <div class="card shadow-sm h-100">
+              <div class="card-body">
+                <h3 class="card-title text-uppercase text-muted fs-6 mb-2">Jogos carregados</h3>
+                <p class="summary-card-value mb-1" id="summary-total">0</p>
+                <p class="summary-card-hint mb-0" id="summary-leagues">-</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="card shadow-sm h-100">
+              <div class="card-body">
+                <h3 class="card-title text-uppercase text-muted fs-6 mb-2">Jogos selecionados</h3>
+                <p class="summary-card-value mb-1" id="summary-selected">0</p>
+                <p class="summary-card-hint mb-0">Salve as alterações para manter o planejamento.</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="card shadow-sm h-100">
+              <div class="card-body">
+                <h3 class="card-title text-uppercase text-muted fs-6 mb-2">Próximo jogo</h3>
+                <p class="summary-card-value mb-1" id="summary-next">-</p>
+                <p class="summary-card-hint mb-0" id="summary-next-detail">Aguardando importação</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card shadow-sm">
+          <div class="card-header d-flex flex-column flex-lg-row gap-2 align-items-lg-center justify-content-lg-between">
+            <div>
+              <h2 class="h5 mb-1">Lista de jogos</h2>
+              <p class="text-secondary mb-0">Selecione as partidas e defina o plano para cada uma.</p>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+              <button type="button" class="btn btn-outline-secondary" id="refresh-button">Atualizar lista</button>
+              <button type="button" class="btn btn-primary" id="save-button">Salvar seleção</button>
+            </div>
+          </div>
+          <div class="card-body">
+            <div id="feedback" class="alert d-none" role="alert"></div>
+            <div id="games-wrapper">
+              <div class="empty-state mb-0">Nenhum jogo importado até o momento.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <template id="game-row-template">
+    <tr class="game-row">
+      <td class="link-cell">
+        <input type="url" class="form-control form-control-sm input-link" placeholder="https://..." disabled />
+      </td>
+      <td class="method-cell">
+        <select class="form-select form-select-sm input-method" disabled>
+          <option value="">Selecione um método</option>
+        </select>
+      </td>
+      <td class="text-center">
+        <div class="form-check justify-content-center m-0">
+          <input type="checkbox" class="form-check-input select-toggle" />
+        </div>
+      </td>
+    </tr>
+  </template>
+
+  <script>
+    const state = {
+      games: [],
+      headers: [],
+      methods: [],
+    };
+
+    const gamesWrapper = document.getElementById('games-wrapper');
+    const feedbackBox = document.getElementById('feedback');
+    const saveButton = document.getElementById('save-button');
+    const refreshButton = document.getElementById('refresh-button');
+    const rowTemplate = document.getElementById('game-row-template');
+
+    async function loadGames(preserveFeedback = false) {
+      gamesWrapper.innerHTML = '<div class="empty-state">Carregando jogos...</div>';
+      if (!preserveFeedback) {
+        hideFeedback();
+      }
+      try {
+        const [gamesResponse, methodsResponse] = await Promise.all([
+          fetch('app.php?route=games'),
+          fetch('app.php?route=methods'),
+        ]);
+
+        if (!gamesResponse.ok) {
+          throw new Error('Não foi possível carregar os jogos.');
+        }
+
+        if (!methodsResponse.ok) {
+          throw new Error('Não foi possível carregar os métodos cadastrados.');
+        }
+
+        const gamesPayload = await gamesResponse.json();
+        const methodsPayload = await methodsResponse.json();
+
+        state.games = Array.isArray(gamesPayload.games) ? gamesPayload.games : [];
+        state.headers = Array.isArray(gamesPayload.headers) ? gamesPayload.headers : [];
+        state.methods = Array.isArray(methodsPayload.methods) ? methodsPayload.methods : [];
+
+        renderGames();
+        updateSummary();
+        updateSelectionPreview();
+
+        if (!state.methods.length && state.games.length) {
+          showFeedback('Cadastre seus métodos antes de salvar as seleções.', 'info');
+        } else if (!preserveFeedback) {
+          hideFeedback();
+        }
+      } catch (error) {
+        gamesWrapper.innerHTML = '<div class="empty-state">Erro ao carregar jogos. Tente novamente mais tarde.</div>';
+        showFeedback(error.message || 'Erro ao carregar os dados.', 'error');
+        state.games = [];
+        state.headers = [];
+        state.methods = [];
+        updateSummary();
+        updateSelectionPreview();
+      }
+    }
+
+    function renderGames() {
+      if (!state.games.length) {
+        gamesWrapper.innerHTML = '<div class="empty-state">Importe um arquivo CSV para visualizar os jogos.</div>';
+        updateSelectionPreview();
+        return;
+      }
+
+      const groups = groupGamesByDate(state.games);
+
+      gamesWrapper.innerHTML = '';
+
+      groups.forEach((group) => {
+        const section = document.createElement('section');
+        section.className = 'game-day-section mb-4';
+
+        const title = document.createElement('h3');
+        title.className = 'h6 text-uppercase text-muted mb-3 game-day-title';
+        title.textContent = group.label;
+        section.appendChild(title);
+
+        const table = document.createElement('table');
+        table.className = 'table table-striped table-hover align-middle games-table';
+
+        const thead = document.createElement('thead');
+        const headerRow = document.createElement('tr');
+
+        state.headers.forEach((header) => {
+          const th = document.createElement('th');
+          th.textContent = header;
+          headerRow.appendChild(th);
+        });
+
+        const linkHeader = document.createElement('th');
+        linkHeader.textContent = 'Link';
+        headerRow.appendChild(linkHeader);
+
+        const methodHeader = document.createElement('th');
+        methodHeader.textContent = 'Método';
+        headerRow.appendChild(methodHeader);
+
+        const selectHeader = document.createElement('th');
+        selectHeader.textContent = 'Selecionar';
+        headerRow.appendChild(selectHeader);
+
+        thead.appendChild(headerRow);
+        table.appendChild(thead);
+
+        const tbody = document.createElement('tbody');
+
+        group.games.forEach((game) => {
+          const row = rowTemplate.content.firstElementChild.cloneNode(true);
+          row.dataset.id = String(game.id);
+          row.dataset.originalSelected = game.selected ? '1' : '0';
+          row.dataset.dirty = '0';
+
+          const checkbox = row.querySelector('.select-toggle');
+          const methodSelect = row.querySelector('.input-method');
+          const linkInput = row.querySelector('.input-link');
+
+          checkbox.checked = Boolean(game.selected);
+          const initialMethod = populateMethodSelect(methodSelect, game);
+          row.dataset.originalMethodId = initialMethod;
+          const initialLink = typeof game.link === 'string' ? game.link : '';
+          linkInput.value = initialLink;
+          row.dataset.originalLink = initialLink.trim();
+
+          methodSelect.disabled = !checkbox.checked || !state.methods.length;
+          linkInput.disabled = !checkbox.checked;
+
+          checkbox.addEventListener('change', () => {
+            const isChecked = checkbox.checked;
+            methodSelect.disabled = !isChecked || !state.methods.length;
+            linkInput.disabled = !isChecked;
+            updateDirtyState(row);
+          });
+
+          methodSelect.addEventListener('change', () => updateDirtyState(row));
+          linkInput.addEventListener('input', () => updateDirtyState(row));
+
+          const linkCell = row.querySelector('.link-cell');
+
+          state.headers.forEach((header) => {
+            const cell = document.createElement('td');
+            const value = game.raw && Object.prototype.hasOwnProperty.call(game.raw, header)
+              ? game.raw[header]
+              : '';
+            cell.textContent = value !== '' ? value : '-';
+            row.insertBefore(cell, linkCell);
+          });
+
+          tbody.appendChild(row);
+          updateDirtyState(row);
+        });
+
+        table.appendChild(tbody);
+
+        const container = document.createElement('div');
+        container.className = 'table-responsive';
+        container.appendChild(table);
+
+        section.appendChild(container);
+        gamesWrapper.appendChild(section);
+      });
+    }
+
+    function updateDirtyState(row) {
+      const checkbox = row.querySelector('.select-toggle');
+      const methodSelect = row.querySelector('.input-method');
+
+      const selected = checkbox.checked;
+      const methodValue = selected ? methodSelect.value : '';
+      const linkInput = row.querySelector('.input-link');
+      const linkValue = linkInput ? linkInput.value.trim() : '';
+
+      const originalSelected = row.dataset.originalSelected === '1';
+      const originalMethod = row.dataset.originalMethodId || '';
+      const originalLink = row.dataset.originalLink || '';
+
+      const linkDirty = linkValue !== originalLink;
+      const isDirty = selected !== originalSelected || methodValue !== originalMethod || linkDirty;
+      row.dataset.dirty = isDirty ? '1' : '0';
+
+      updateSelectionPreview();
+    }
+
+    function collectUpdates() {
+      const updates = [];
+      const rows = gamesWrapper.querySelectorAll('.game-row');
+
+      rows.forEach((row) => {
+        if (row.dataset.dirty !== '1') {
+          return;
+        }
+
+        const checkbox = row.querySelector('.select-toggle');
+        const methodSelect = row.querySelector('.input-method');
+        const selected = checkbox.checked;
+        const id = Number.parseInt(row.dataset.id, 10);
+        if (Number.isNaN(id)) {
+          throw new Error('Não foi possível identificar um dos jogos da lista.');
+        }
+
+        const update = {
+          id,
+          selected,
+        };
+
+        if (selected) {
+          const methodId = Number.parseInt(methodSelect.value, 10);
+
+          if (!Number.isInteger(methodId)) {
+            throw new Error('Selecione um método para todos os jogos selecionados.');
+          }
+
+          update.method_id = methodId;
+
+          const linkInput = row.querySelector('.input-link');
+          if (linkInput) {
+            update.link = linkInput.value.trim();
+          }
+        } else {
+          const originalLink = row.dataset.originalLink || '';
+          if (originalLink !== '') {
+            update.link = '';
+          }
+        }
+
+        updates.push(update);
+      });
+
+      return updates;
+    }
+
+    function populateMethodSelect(select, game) {
+      select.innerHTML = '';
+
+      const placeholder = document.createElement('option');
+      placeholder.value = '';
+      placeholder.textContent = state.methods.length
+        ? 'Selecione um método'
+        : 'Cadastre um método';
+      select.appendChild(placeholder);
+
+      let selectedValue = '';
+
+      state.methods.forEach((method) => {
+        const option = document.createElement('option');
+        option.value = String(method.id);
+        option.textContent = method.name;
+        option.dataset.color = method.color;
+        select.appendChild(option);
+
+        if (game.method_id && method.id === game.method_id) {
+          selectedValue = String(method.id);
+        }
+      });
+
+      if (!selectedValue && game.method) {
+        const fallback = state.methods.find((method) => method.name === game.method);
+        if (fallback) {
+          selectedValue = String(fallback.id);
+        }
+      }
+
+      select.value = selectedValue;
+
+      return selectedValue;
+    }
+
+    function showFeedback(message, type) {
+      const variants = {
+        success: 'alert-success',
+        error: 'alert-danger',
+        info: 'alert-info',
+      };
+      const variant = variants[type] || 'alert-secondary';
+      feedbackBox.textContent = message;
+      feedbackBox.className = `alert ${variant}`;
+      feedbackBox.classList.remove('d-none');
+    }
+
+    function hideFeedback() {
+      feedbackBox.textContent = '';
+      feedbackBox.className = 'alert d-none';
+    }
+
+    function updateSelectionPreview() {
+      const rows = gamesWrapper.querySelectorAll('.game-row');
+      if (!rows.length) {
+        document.getElementById('summary-selected').textContent = '0';
+        return;
+      }
+
+      let count = 0;
+      rows.forEach((row) => {
+        const checkbox = row.querySelector('.select-toggle');
+        if (checkbox && checkbox.checked) {
+          count += 1;
+        }
+      });
+
+      document.getElementById('summary-selected').textContent = count.toString();
+    }
+
+    function updateSummary() {
+      const total = state.games.length;
+      const selected = state.games.filter((game) => game.selected).length;
+      const leagues = new Set(state.games.map((game) => game.league).filter(Boolean));
+
+      document.getElementById('summary-total').textContent = total.toString();
+      document.getElementById('summary-selected').textContent = selected.toString();
+      document.getElementById('summary-leagues').textContent = leagues.size
+        ? `${leagues.size} liga(s) diferentes`
+        : 'Nenhuma liga cadastrada';
+
+      const upcoming = state.games
+        .map((game) => {
+          if (!game.match_date || !game.match_time) {
+            return null;
+          }
+          const iso = `${game.match_date}T${game.match_time.length === 5 ? game.match_time : `${game.match_time}:00`}`;
+          const date = new Date(iso);
+          return Number.isNaN(date.getTime()) ? null : { game, date };
+        })
+        .filter(Boolean)
+        .sort((a, b) => a.date - b.date);
+
+      const nextValue = document.getElementById('summary-next');
+      const nextDetail = document.getElementById('summary-next-detail');
+
+      if (upcoming.length) {
+        const next = upcoming[0];
+        const formatter = new Intl.DateTimeFormat('pt-BR', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        });
+        nextValue.textContent = `${next.game.home_team || 'Time da casa'} x ${next.game.away_team || 'Visitante'}`;
+        nextDetail.textContent = `${formatter.format(next.date)}${next.game.league ? ` · ${next.game.league}` : ''}`;
+      } else {
+        const fallback = state.games
+          .filter((game) => game.match_time)
+          .sort((a, b) => String(a.match_time).localeCompare(String(b.match_time)));
+
+        if (fallback.length) {
+          const next = fallback[0];
+          nextValue.textContent = `${next.home_team || 'Time da casa'} x ${next.away_team || 'Visitante'}`;
+          nextDetail.textContent = `${next.match_time}${next.league ? ` · ${next.league}` : ''}`;
+        } else {
+          nextValue.textContent = '-';
+          nextDetail.textContent = 'Aguardando importação';
+        }
+      }
+    }
+
+    async function saveSelection() {
+      try {
+        const updates = collectUpdates();
+        if (!updates.length) {
+          showFeedback('Nenhuma alteração para salvar.', 'info');
+          return;
+        }
+
+        saveButton.disabled = true;
+        saveButton.textContent = 'Salvando...';
+
+        const response = await fetch('app.php?route=games/selection', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ updates }),
+        });
+
+        const payload = await response.json();
+
+        if (!response.ok) {
+          throw new Error(payload.message || 'Não foi possível salvar as alterações.');
+        }
+
+        await loadGames(true);
+        showFeedback(`Seleção salva com sucesso! ${payload.updated} jogo(s) atualizado(s).`, 'success');
+      } catch (error) {
+        showFeedback(error.message || 'Erro ao salvar seleção.', 'error');
+      } finally {
+        saveButton.disabled = false;
+        saveButton.textContent = 'Salvar seleção';
+      }
+    }
+
+    refreshButton.addEventListener('click', () => {
+      loadGames();
+    });
+
+    saveButton.addEventListener('click', () => {
+      saveSelection();
+    });
+
+    loadGames();
+
+    function groupGamesByDate(games) {
+      const groups = new Map();
+
+      games.forEach((game) => {
+        let key = typeof game.match_date === 'string' && game.match_date ? game.match_date : '';
+        if (!key) {
+          const rawDate = getRawDateFromGame(game);
+          const iso = toIsoDate(rawDate);
+          key = iso || '';
+        }
+        if (!groups.has(key)) {
+          groups.set(key, []);
+        }
+        groups.get(key).push(game);
+      });
+
+      const entries = Array.from(groups.entries()).map(([key, list]) => {
+        const sorted = list.slice().sort((a, b) => compareGamesByTime(a, b));
+        return {
+          key,
+          label: formatDayLabel(key),
+          games: sorted,
+        };
+      });
+
+      entries.sort((a, b) => {
+        if (a.key === b.key) {
+          return 0;
+        }
+        if (!a.key) {
+          return 1;
+        }
+        if (!b.key) {
+          return -1;
+        }
+        return a.key.localeCompare(b.key);
+      });
+
+      return entries;
+    }
+
+    function compareGamesByTime(a, b) {
+      const timeA = normalizeTimeForSort(a.match_time);
+      const timeB = normalizeTimeForSort(b.match_time);
+      if (timeA === timeB) {
+        const homeA = (a.home_team || '').toString();
+        const homeB = (b.home_team || '').toString();
+        return homeA.localeCompare(homeB);
+      }
+      return timeA.localeCompare(timeB);
+    }
+
+    function normalizeTimeForSort(time) {
+      if (!time) {
+        return '99:99';
+      }
+      const trimmed = String(time).trim();
+      const normalized = trimmed.replace(/[hH]/, ':').replace(/\.(?=\d{2}$)/, ':');
+      const match = normalized.match(/^(\d{1,2}):(\d{2})$/);
+      if (match) {
+        return `${match[1].padStart(2, '0')}:${match[2]}`;
+      }
+      return normalized;
+    }
+
+    function formatDayLabel(dateStr) {
+      if (!dateStr) {
+        return 'Data não informada';
+      }
+      const parts = getDateParts(dateStr);
+      if (!parts) {
+        return dateStr;
+      }
+      return `${parts.weekday} · ${parts.dayMonth}`;
+    }
+
+    function getDateParts(dateStr) {
+      const iso = toIsoDate(dateStr);
+      if (!iso) {
+        return null;
+      }
+      const date = new Date(`${iso}T00:00:00`);
+      if (Number.isNaN(date.getTime())) {
+        return null;
+      }
+      const weekday = capitalizeFirst(new Intl.DateTimeFormat('pt-BR', { weekday: 'long' }).format(date));
+      const dayMonth = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit' }).format(date);
+      return { weekday, dayMonth };
+    }
+
+    function capitalizeFirst(text) {
+      if (!text) {
+        return '';
+      }
+      return text.charAt(0).toUpperCase() + text.slice(1);
+    }
+
+    function getRawDateFromGame(game) {
+      if (!game || !game.raw || typeof game.raw !== 'object') {
+        return '';
+      }
+      const candidates = ['Data', 'Data Jogo', 'Date'];
+      for (const key of candidates) {
+        if (Object.prototype.hasOwnProperty.call(game.raw, key)) {
+          const value = String(game.raw[key]).trim();
+          if (value) {
+            return value;
+          }
+        }
+      }
+      return '';
+    }
+
+    function toIsoDate(value) {
+      if (typeof value !== 'string') {
+        return '';
+      }
+      const trimmed = value.trim();
+      if (!trimmed) {
+        return '';
+      }
+      if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+        return trimmed;
+      }
+      const normalized = trimmed.replace(/[.\-]/g, '/');
+      const parts = normalized.split('/');
+      if (parts.length !== 3) {
+        return '';
+      }
+
+      let day;
+      let month;
+      let year;
+
+      if (parts[0].length === 4) {
+        [year, month, day] = parts;
+      } else {
+        [day, month, year] = parts;
+      }
+
+      if (!day || !month || !year) {
+        return '';
+      }
+
+      const yearNumber = Number.parseInt(year, 10);
+      const monthNumber = Number.parseInt(month, 10);
+      const dayNumber = Number.parseInt(day, 10);
+
+      if (!Number.isFinite(yearNumber) || !Number.isFinite(monthNumber) || !Number.isFinite(dayNumber)) {
+        return '';
+      }
+
+      let resolvedYear = yearNumber;
+      if (resolvedYear < 100) {
+        resolvedYear += resolvedYear >= 70 ? 1900 : 2000;
+      }
+
+      if (resolvedYear < 1000) {
+        return '';
+      }
+
+      if (monthNumber < 1 || monthNumber > 12) {
+        return '';
+      }
+
+      if (dayNumber < 1 || dayNumber > 31) {
+        return '';
+      }
+
+      const date = new Date(Date.UTC(resolvedYear, monthNumber - 1, dayNumber));
+      if (Number.isNaN(date.getTime())) {
+        return '';
+      }
+
+      if (date.getUTCFullYear() !== resolvedYear
+        || date.getUTCMonth() + 1 !== monthNumber
+        || date.getUTCDate() !== dayNumber) {
+        return '';
+      }
+
+      return `${resolvedYear.toString().padStart(4, '0')}-${String(monthNumber).padStart(2, '0')}-${String(dayNumber).padStart(2, '0')}`;
+    }
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+</body>
+</html>
