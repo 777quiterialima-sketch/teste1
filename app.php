@@ -47,6 +47,12 @@ switch ($uri) {
         }
         handleSelectionUpdate();
         break;
+    case '/games/delete':
+        if ($method !== 'POST') {
+            respondJson(405, ['message' => 'Método não permitido.']);
+        }
+        handleDeleteAllGames();
+        break;
     case '/':
         if ($method === 'GET') {
             readfile(__DIR__ . '/index.html');
@@ -386,6 +392,42 @@ function handleSelectionUpdate(): void
     }
 
     respondJson(200, ['updated' => $updated]);
+}
+
+function handleDeleteAllGames(): void
+{
+    try {
+        $pdo = getDatabaseConnection();
+    } catch (Throwable $exception) {
+        respondJson(500, ['message' => 'Erro ao abrir o banco de dados.', 'detail' => $exception->getMessage()]);
+    }
+
+    $deleted = 0;
+
+    try {
+        $pdo->beginTransaction();
+        $result = $pdo->exec('DELETE FROM games');
+
+        if ($result === false) {
+            throw new RuntimeException('Falha ao remover os jogos.');
+        }
+
+        $deleted = (int) $result;
+        $pdo->commit();
+    } catch (Throwable $exception) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+
+        respondJson(500, ['message' => 'Erro ao excluir os jogos.', 'detail' => $exception->getMessage()]);
+    }
+
+    $headersFile = __DIR__ . '/data/headers.json';
+    if (is_file($headersFile)) {
+        @unlink($headersFile);
+    }
+
+    respondJson(200, ['deleted' => $deleted]);
 }
 
 function cleanHeader(string $header): string
