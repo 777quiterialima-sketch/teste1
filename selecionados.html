@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Jogos Selecionados - Trader Esportivo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="bg-light">
+  <div class="d-flex app-shell">
+    <aside class="sidebar text-white p-4 d-flex flex-column gap-4">
+      <div>
+        <div class="brand-name">Trader<span>Esportivo</span></div>
+        <p class="brand-tagline mb-0">Planejamento de bancas e entradas</p>
+      </div>
+      <nav class="nav flex-column nav-pills gap-2">
+        <a href="index.html" class="nav-link">Dashboard</a>
+        <a href="agenda.html" class="nav-link">Jogos por dia</a>
+        <a href="cadastro.html" class="nav-link">Cadastrar jogos</a>
+        <a href="selecionados.html" class="nav-link active">Jogos selecionados</a>
+        <a href="metodos.html" class="nav-link">Métodos</a>
+      </nav>
+      <div class="info-card">
+        <h2 class="h6 mb-3">Próximos passos</h2>
+        <ul class="mb-0 ps-3">
+          <li>Revise o plano de jogo antes de iniciar o trading.</li>
+          <li>Use os detalhes para conferir dados do CSV original.</li>
+          <li>Ajuste as seleções no dashboard quando necessário.</li>
+        </ul>
+      </div>
+    </aside>
+
+    <main class="p-4 p-lg-5">
+      <div class="container-fluid px-0">
+        <header class="d-flex flex-column flex-lg-row align-items-lg-center justify-content-lg-between gap-3 mb-4">
+          <div>
+            <p class="page-subtitle mb-1">Plano de entrada</p>
+            <h1 class="page-title h3 mb-2">Jogos selecionados</h1>
+            <p class="text-secondary mb-0">Confira apenas as partidas marcadas como prioritárias, com gols esperados e método definido.</p>
+          </div>
+          <div>
+            <a href="index.html" class="btn btn-outline-primary">Voltar ao dashboard</a>
+          </div>
+        </header>
+
+        <div class="row g-3 mb-4">
+          <div class="col-md-4">
+            <div class="card shadow-sm h-100">
+              <div class="card-body">
+                <h3 class="card-title text-uppercase text-muted fs-6 mb-2">Total selecionado</h3>
+                <p class="summary-card-value mb-1" id="selected-count">0</p>
+                <p class="summary-card-hint mb-0" id="selected-leagues">-</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="card shadow-sm h-100">
+              <div class="card-body">
+                <h3 class="card-title text-uppercase text-muted fs-6 mb-2">Média de gols esperados</h3>
+                <p class="summary-card-value mb-1" id="selected-average">0.0</p>
+                <p class="summary-card-hint mb-0">Baseado apenas nos jogos com gols informados.</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="card shadow-sm h-100">
+              <div class="card-body">
+                <h3 class="card-title text-uppercase text-muted fs-6 mb-2">Próxima execução</h3>
+                <p class="summary-card-value mb-1" id="selected-next">-</p>
+                <p class="summary-card-hint mb-0" id="selected-next-detail">Aguardando seleção</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <section class="d-flex flex-column gap-3" id="selected-wrapper">
+          <div class="empty-state">Nenhum jogo foi selecionado ainda. Volte ao dashboard para definir o seu plano.</div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <template id="selected-item-template">
+    <article class="card shadow-sm selected-item">
+      <div class="selected-item__main d-flex flex-column flex-xl-row align-items-xl-center gap-3">
+        <div class="d-flex align-items-center gap-3 flex-grow-1">
+          <span class="selected-item__flag" aria-hidden="true"></span>
+          <div>
+            <div class="selected-item__league-name"></div>
+            <small class="selected-item__country"></small>
+          </div>
+        </div>
+        <div class="selected-item__time text-xl-center"></div>
+        <div class="selected-item__match text-xl-center flex-grow-1 d-flex flex-column flex-sm-row align-items-sm-center gap-2">
+          <span class="selected-item__home"></span>
+          <span class="text-secondary">x</span>
+          <span class="selected-item__away"></span>
+        </div>
+        <div class="d-flex flex-wrap gap-2 align-items-center">
+          <span class="badge-method selected-item__method"></span>
+          <span class="badge-goals selected-item__goals"></span>
+          <a class="btn btn-outline-primary btn-sm selected-item__link" target="_blank" rel="noopener">Detalhes</a>
+          <button type="button" class="btn btn-outline-secondary btn-sm selected-item__toggle" aria-expanded="false">Ver dados</button>
+        </div>
+      </div>
+      <div class="selected-item__details" hidden>
+        <dl class="details-list mb-0"></dl>
+      </div>
+    </article>
+  </template>
+
+  <script>
+    const wrapper = document.getElementById('selected-wrapper');
+    const itemTemplate = document.getElementById('selected-item-template');
+
+    async function loadSelectedGames() {
+      wrapper.innerHTML = '<div class="empty-state">Carregando jogos selecionados...</div>';
+      try {
+        const response = await fetch('app.php?route=games&selected=1');
+        if (!response.ok) {
+          throw new Error('Não foi possível carregar os jogos selecionados.');
+        }
+
+        const payload = await response.json();
+        const games = Array.isArray(payload.games) ? payload.games : [];
+        const headers = Array.isArray(payload.headers) ? payload.headers : [];
+
+        if (!games.length) {
+          wrapper.innerHTML = '<div class="empty-state">Nenhum jogo foi selecionado ainda. Volte ao dashboard para definir o seu plano.</div>';
+          updateSummary([]);
+          return;
+        }
+
+        renderSelected(games, headers);
+        updateSummary(games);
+      } catch (error) {
+        wrapper.innerHTML = '<div class="empty-state">Erro ao carregar os jogos. Tente novamente em instantes.</div>';
+        console.error(error);
+      }
+    }
+
+    function renderSelected(games, headers) {
+      wrapper.innerHTML = '';
+
+      const groups = groupGamesByDate(games);
+
+      groups.forEach((group) => {
+        const section = document.createElement('section');
+        section.className = 'selected-day-section d-flex flex-column gap-3';
+
+        const title = document.createElement('h2');
+        title.className = 'h6 text-uppercase text-muted mb-0 selected-day-title';
+        title.textContent = group.label;
+        section.appendChild(title);
+
+        const list = document.createElement('div');
+        list.className = 'd-flex flex-column gap-3';
+
+        group.games.forEach((game) => {
+          const item = itemTemplate.content.firstElementChild.cloneNode(true);
+          const flagEl = item.querySelector('.selected-item__flag');
+          const leagueNameEl = item.querySelector('.selected-item__league-name');
+          const countryEl = item.querySelector('.selected-item__country');
+          const timeEl = item.querySelector('.selected-item__time');
+          const homeEl = item.querySelector('.selected-item__home');
+          const awayEl = item.querySelector('.selected-item__away');
+          const goalsTag = item.querySelector('.selected-item__goals');
+          const methodTag = item.querySelector('.selected-item__method');
+          const detailLink = item.querySelector('.selected-item__link');
+          const detailsList = item.querySelector('.details-list');
+          const toggleButton = item.querySelector('.selected-item__toggle');
+          const detailsPanel = item.querySelector('.selected-item__details');
+
+          const leagueLabel = getLeagueLabel(game);
+          const countryLabel = getCountryLabel(game);
+          const hasLeague = Boolean(leagueLabel);
+          const hasCountry = Boolean(countryLabel);
+          const flag = countryToFlagEmoji(countryLabel);
+          const timeLabel = formatMatchTime(game);
+          const dateLabel = formatMatchDate(game);
+
+          flagEl.textContent = flag || '◯';
+          flagEl.classList.toggle('selected-item__flag--placeholder', !flag);
+          if (hasCountry) {
+            flagEl.setAttribute('aria-label', countryLabel);
+            flagEl.setAttribute('title', countryLabel);
+          } else {
+            flagEl.removeAttribute('aria-label');
+            flagEl.removeAttribute('title');
+          }
+
+          leagueNameEl.textContent = hasLeague ? leagueLabel : 'Liga não informada';
+          leagueNameEl.classList.toggle('selected-item__league-name--placeholder', !hasLeague);
+
+          countryEl.textContent = hasCountry ? countryLabel : '';
+          countryEl.classList.toggle('selected-item__country--placeholder', !hasCountry);
+
+          const combinedTime = dateLabel ? `${dateLabel} · ${timeLabel}` : timeLabel;
+          timeEl.textContent = combinedTime;
+          timeEl.classList.toggle('selected-item__time--placeholder', timeLabel === 'Horário não informado');
+
+          const goalsValue = getExpectedGoalsValue(game);
+          goalsTag.textContent = `xG: ${goalsValue !== null ? goalsValue.toFixed(2) : '—'}`;
+          methodTag.textContent = game.method || 'Método não informado';
+
+          if (game.method_color) {
+            methodTag.style.backgroundColor = game.method_color;
+            methodTag.style.borderColor = game.method_color;
+            const readable = getReadableTextColor(game.method_color);
+            if (readable) {
+              methodTag.style.color = readable;
+            }
+          } else {
+            methodTag.style.removeProperty('background-color');
+            methodTag.style.removeProperty('border-color');
+            methodTag.style.removeProperty('color');
+          }
+
+          if (game.link) {
+            detailLink.href = game.link;
+            detailLink.target = '_blank';
+            detailLink.rel = 'noopener noreferrer';
+            detailLink.classList.remove('disabled');
+            detailLink.removeAttribute('aria-disabled');
+            detailLink.title = game.link;
+          } else {
+            detailLink.href = '#';
+            detailLink.removeAttribute('target');
+            detailLink.removeAttribute('rel');
+            detailLink.classList.add('disabled');
+            detailLink.setAttribute('aria-disabled', 'true');
+            detailLink.title = 'Link não informado';
+          }
+
+          detailLink.addEventListener('click', (event) => {
+            if (!game.link) {
+              event.preventDefault();
+            }
+          });
+
+          const homeOdd = getOddValueFromGame(game, 'home');
+          const awayOdd = getOddValueFromGame(game, 'away');
+
+          homeEl.textContent = formatTeamWithOdd(
+            game.home_team || getRawValue(game.raw, ['Casa', 'Mandante', 'Home']) || 'Time da casa',
+            homeOdd,
+          );
+          awayEl.textContent = formatTeamWithOdd(
+            game.away_team || getRawValue(game.raw, ['Visitante', 'Away']) || 'Visitante',
+            awayOdd,
+          );
+
+          headers.forEach((header) => {
+            const value = game.raw && Object.prototype.hasOwnProperty.call(game.raw, header)
+              ? game.raw[header]
+              : '';
+            const dt = document.createElement('dt');
+            const dd = document.createElement('dd');
+            dt.textContent = header;
+            dd.textContent = value !== '' ? value : '—';
+            detailsList.appendChild(dt);
+            detailsList.appendChild(dd);
+          });
+
+          toggleButton.addEventListener('click', () => {
+            const expanded = toggleButton.getAttribute('aria-expanded') === 'true';
+            toggleButton.setAttribute('aria-expanded', String(!expanded));
+            toggleButton.textContent = expanded ? 'Ver dados' : 'Ocultar dados';
+            detailsPanel.hidden = expanded;
+          });
+
+          list.appendChild(item);
+        });
+
+        section.appendChild(list);
+        wrapper.appendChild(section);
+      });
+    }
+
+    function updateSummary(games) {
+      const total = games.length;
+      document.getElementById('selected-count').textContent = total.toString();
+
+      const leagues = new Set(games.map((game) => game.league).filter(Boolean));
+      document.getElementById('selected-leagues').textContent = leagues.size
+        ? `${leagues.size} liga(s) em foco`
+        : 'Sem informação de liga';
+
+      const goals = games
+        .map((game) => getExpectedGoalsValue(game))
+        .filter((value) => typeof value === 'number' && !Number.isNaN(value));
+
+      const average = goals.length
+        ? goals.reduce((accumulator, value) => accumulator + value, 0) / goals.length
+        : 0;
+
+      document.getElementById('selected-average').textContent = average.toFixed(2);
+
+      const upcoming = games
+        .map((game) => {
+          if (!game.match_date || !game.match_time) {
+            return null;
+          }
+          const iso = `${game.match_date}T${game.match_time.length === 5 ? game.match_time : `${game.match_time}:00`}`;
+          const date = new Date(iso);
+          return Number.isNaN(date.getTime()) ? null : { game, date };
+        })
+        .filter(Boolean)
+        .sort((a, b) => a.date - b.date);
+
+      const nextValue = document.getElementById('selected-next');
+      const nextDetail = document.getElementById('selected-next-detail');
+
+      if (upcoming.length) {
+        const formatter = new Intl.DateTimeFormat('pt-BR', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        });
+        const next = upcoming[0];
+        nextValue.textContent = `${next.game.home_team || 'Time da casa'} x ${next.game.away_team || 'Visitante'}`;
+        nextDetail.textContent = `${formatter.format(next.date)}${next.game.league ? ` · ${next.game.league}` : ''}`;
+      } else {
+        const fallback = games
+          .filter((game) => game.match_time)
+          .sort((a, b) => String(a.match_time).localeCompare(String(b.match_time)));
+
+        if (fallback.length) {
+          const next = fallback[0];
+          nextValue.textContent = `${next.home_team || 'Time da casa'} x ${next.away_team || 'Visitante'}`;
+          nextDetail.textContent = `${next.match_time}${next.league ? ` · ${next.league}` : ''}`;
+        } else {
+          nextValue.textContent = '-';
+          nextDetail.textContent = 'Aguardando seleção';
+        }
+      }
+    }
+
+    function getReadableTextColor(hexColor) {
+      if (typeof hexColor !== 'string') {
+        return '';
+      }
+
+      const normalized = hexColor.trim().replace('#', '');
+
+      if (normalized.length !== 6) {
+        return '';
+      }
+
+      const r = Number.parseInt(normalized.slice(0, 2), 16);
+      const g = Number.parseInt(normalized.slice(2, 4), 16);
+      const b = Number.parseInt(normalized.slice(4, 6), 16);
+
+      if ([r, g, b].some((value) => Number.isNaN(value))) {
+        return '';
+      }
+
+      const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+      return luminance > 0.6 ? '#1a1a1a' : '#ffffff';
+    }
+
+    function getLeagueLabel(game) {
+      if (game.league) {
+        return game.league;
+      }
+      return getRawValue(game.raw, ['Liga', 'League', 'Campeonato']);
+    }
+
+    function getCountryLabel(game) {
+      if (!game.raw || typeof game.raw !== 'object') {
+        return '';
+      }
+      return getRawValue(game.raw, ['País', 'Pais', 'Country']);
+    }
+
+    function getRawValue(raw, candidates) {
+      if (!raw || typeof raw !== 'object') {
+        return '';
+      }
+
+      for (const key of candidates) {
+        if (Object.prototype.hasOwnProperty.call(raw, key)) {
+          const value = String(raw[key]).trim();
+          if (value) {
+            return value;
+          }
+        }
+      }
+
+      const normalizedEntries = Object.entries(raw).map(([key, value]) => [normalizeKey(key), value]);
+
+      for (const candidate of candidates) {
+        const normalizedCandidate = normalizeKey(candidate);
+        const match = normalizedEntries.find(([normalizedKey]) => normalizedKey === normalizedCandidate);
+        if (match) {
+          const value = String(match[1]).trim();
+          if (value) {
+            return value;
+          }
+        }
+      }
+
+      return '';
+    }
+
+    function parseNumeric(value) {
+      if (value === null || value === undefined) {
+        return null;
+      }
+
+      const normalized = String(value)
+        .trim()
+        .replace(/\s+/g, '')
+        .replace(',', '.');
+
+      if (!normalized) {
+        return null;
+      }
+
+      const parsed = Number.parseFloat(normalized);
+      return Number.isFinite(parsed) ? parsed : null;
+    }
+
+    function getExpectedGoalsValue(game) {
+      const rawValue = game && game.raw
+        ? getRawValue(game.raw, ['Média Gols', 'Media Gols', 'Média de Gols', 'Average Goals', 'xG'])
+        : '';
+
+      const fromRaw = parseNumeric(rawValue);
+      if (fromRaw !== null) {
+        return fromRaw;
+      }
+
+      if (game && game.expected_goals !== null && game.expected_goals !== undefined) {
+        const parsed = parseNumeric(game.expected_goals);
+        if (parsed !== null) {
+          return parsed;
+        }
+      }
+
+      return null;
+    }
+
+    function getOddValueFromGame(game, side) {
+      if (!game || !game.raw) {
+        return '';
+      }
+
+      const candidates = side === 'home'
+        ? ['Odd Casa', 'Odd Mandante', 'Odd Home', 'Odd 1', 'Casa Odd', 'Home Odds']
+        : ['Odd Visitante', 'Odd Fora', 'Odd Away', 'Odd 2', 'Visitante Odd', 'Away Odds'];
+
+      const value = getRawValue(game.raw, candidates);
+      if (!value) {
+        return '';
+      }
+
+      const numeric = parseNumeric(value);
+      if (numeric !== null) {
+        return numeric.toFixed(2);
+      }
+
+      return value;
+    }
+
+    function formatTeamWithOdd(name, odd) {
+      if (!odd) {
+        return name;
+      }
+      return `${name} (Odd ${odd})`;
+    }
+
+    function normalizeKey(label) {
+      let working = String(label);
+      if (typeof working.normalize === 'function') {
+        working = working.normalize('NFD');
+      }
+
+      return working
+        .replace(/[^\p{L}\p{N}\s_-]/gu, '')
+        .toLowerCase()
+        .replace(/[\s-]+/g, '_')
+        .trim();
+    }
+
+    function formatMatchTime(game) {
+      const direct = typeof game.match_time === 'string' ? game.match_time : '';
+      const raw = getRawValue(game.raw, ['Horário', 'Horario', 'Hora', 'Time']);
+      const value = direct || raw;
+
+      if (!value) {
+        return 'Horário não informado';
+      }
+
+      const trimmed = value.trim();
+      if (!trimmed) {
+        return 'Horário não informado';
+      }
+
+      const normalized = trimmed
+        .replace(/[hH]/, ':')
+        .replace(/\.(?=\d{2}$)/, ':');
+
+      const match = normalized.match(/^(\d{1,2}):(\d{2})$/);
+      if (match) {
+        const hour = match[1].padStart(2, '0');
+        const minute = match[2];
+        return `${hour}:${minute}`;
+      }
+
+      return normalized;
+    }
+
+    function formatMatchDate(game) {
+      if (typeof game.match_date === 'string' && game.match_date) {
+        const formatted = formatDateWithWeekday(game.match_date);
+        if (formatted) {
+          return formatted;
+        }
+      }
+
+      const rawDate = getRawValue(game.raw, ['Data', 'Data Jogo', 'Date']);
+      if (rawDate) {
+        const iso = toIsoDate(rawDate);
+        if (iso) {
+          return formatDateWithWeekday(iso);
+        }
+        return rawDate;
+      }
+
+      return '';
+    }
+
+    function groupGamesByDate(games) {
+      const groups = new Map();
+
+      games.forEach((game) => {
+        let key = '';
+        if (typeof game.match_date === 'string' && game.match_date) {
+          key = game.match_date;
+        } else {
+          const rawDate = getRawValue(game.raw, ['Data', 'Data Jogo', 'Date']);
+          const iso = toIsoDate(rawDate);
+          key = iso || '';
+        }
+
+        if (!groups.has(key)) {
+          groups.set(key, []);
+        }
+        groups.get(key).push(game);
+      });
+
+      const entries = Array.from(groups.entries()).map(([key, list]) => {
+        const normalizedKey = key || '';
+        const label = normalizedKey ? formatDayLabel(normalizedKey) : 'Data não informada';
+        const sorted = list.slice().sort((a, b) => compareGamesByTime(a, b));
+        return { key: normalizedKey, label, games: sorted };
+      });
+
+      entries.sort((a, b) => {
+        if (a.key === b.key) {
+          return 0;
+        }
+        if (!a.key) {
+          return 1;
+        }
+        if (!b.key) {
+          return -1;
+        }
+        return a.key.localeCompare(b.key);
+      });
+
+      return entries;
+    }
+
+    function compareGamesByTime(a, b) {
+      const timeA = normalizeTimeForSort(a.match_time);
+      const timeB = normalizeTimeForSort(b.match_time);
+      if (timeA === timeB) {
+        const homeA = (a.home_team || '').toString();
+        const homeB = (b.home_team || '').toString();
+        return homeA.localeCompare(homeB);
+      }
+      return timeA.localeCompare(timeB);
+    }
+
+    function normalizeTimeForSort(time) {
+      if (!time) {
+        return '99:99';
+      }
+      const trimmed = String(time).trim();
+      const normalized = trimmed.replace(/[hH]/, ':').replace(/\.(?=\d{2}$)/, ':');
+      const match = normalized.match(/^(\d{1,2}):(\d{2})$/);
+      if (match) {
+        return `${match[1].padStart(2, '0')}:${match[2]}`;
+      }
+      return normalized;
+    }
+
+    function formatDayLabel(dateStr) {
+      const parts = getDateParts(dateStr);
+      if (!parts) {
+        return dateStr || 'Data não informada';
+      }
+      return `${parts.weekday} · ${parts.dayMonth}`;
+    }
+
+    function formatDateWithWeekday(dateStr) {
+      const parts = getDateParts(dateStr);
+      if (!parts) {
+        return typeof dateStr === 'string' ? dateStr : '';
+      }
+      return `${parts.weekday}, ${parts.dayMonth}`;
+    }
+
+    function getDateParts(value) {
+      const iso = toIsoDate(value);
+      if (!iso) {
+        return null;
+      }
+      const date = new Date(`${iso}T00:00:00`);
+      if (Number.isNaN(date.getTime())) {
+        return null;
+      }
+      const weekday = capitalizeFirst(new Intl.DateTimeFormat('pt-BR', { weekday: 'long' }).format(date));
+      const dayMonth = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit' }).format(date);
+      return { weekday, dayMonth };
+    }
+
+    function toIsoDate(value) {
+      if (typeof value !== 'string') {
+        return '';
+      }
+      const trimmed = value.trim();
+      if (!trimmed) {
+        return '';
+      }
+      if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+        return trimmed;
+      }
+
+      const normalized = trimmed.replace(/[.\-]/g, '/');
+      const parts = normalized.split('/');
+      if (parts.length !== 3) {
+        return '';
+      }
+
+      let day;
+      let month;
+      let year;
+
+      if (parts[0].length === 4) {
+        [year, month, day] = parts;
+      } else {
+        [day, month, year] = parts;
+      }
+
+      if (!day || !month || !year) {
+        return '';
+      }
+
+      const yearNumber = Number.parseInt(year, 10);
+      const monthNumber = Number.parseInt(month, 10);
+      let dayNumber = Number.parseInt(day, 10);
+
+      if (!Number.isFinite(yearNumber) || !Number.isFinite(monthNumber) || !Number.isFinite(dayNumber)) {
+        return '';
+      }
+
+      let resolvedYear = yearNumber;
+      if (resolvedYear < 100) {
+        resolvedYear += resolvedYear >= 70 ? 1900 : 2000;
+      }
+
+      if (resolvedYear < 1000) {
+        return '';
+      }
+
+      if (monthNumber < 1 || monthNumber > 12) {
+        return '';
+      }
+
+      if (dayNumber < 1 || dayNumber > 31) {
+        return '';
+      }
+
+      const date = new Date(Date.UTC(resolvedYear, monthNumber - 1, dayNumber));
+      if (Number.isNaN(date.getTime())) {
+        return '';
+      }
+
+      if (date.getUTCFullYear() !== resolvedYear
+        || date.getUTCMonth() + 1 !== monthNumber
+        || date.getUTCDate() !== dayNumber) {
+        return '';
+      }
+
+      return `${resolvedYear.toString().padStart(4, '0')}-${String(monthNumber).padStart(2, '0')}-${String(dayNumber).padStart(2, '0')}`;
+    }
+
+    function capitalizeFirst(text) {
+      if (!text) {
+        return '';
+      }
+      return text.charAt(0).toUpperCase() + text.slice(1);
+    }
+
+    function countryToFlagEmoji(country) {
+      if (!country) {
+        return '';
+      }
+
+      const lookup = normalizeKey(country).toUpperCase();
+      const map = {
+        BRA: 'BR',
+        BRASIL: 'BR',
+        ARG: 'AR',
+        ARGENTINA: 'AR',
+        ESP: 'ES',
+        ESPANHA: 'ES',
+        ENG: 'GB',
+        INGLATERRA: 'GB',
+        EUA: 'US',
+        USA: 'US',
+        ESTADOS_UNIDOS: 'US',
+        ITA: 'IT',
+        ITALIA: 'IT',
+        ITÁLIA: 'IT',
+        FRA: 'FR',
+        FRANCA: 'FR',
+        FRANÇA: 'FR',
+        ALE: 'DE',
+        ALEMANHA: 'DE',
+        GER: 'DE',
+        HOL: 'NL',
+        HOLANDA: 'NL',
+        NED: 'NL',
+        POR: 'PT',
+        PORTUGAL: 'PT',
+        SCO: 'GB',
+        ESCÓCIA: 'GB',
+        ESCOTIA: 'GB',
+        MEX: 'MX',
+        MEXICO: 'MX',
+        MÉXICO: 'MX',
+        COL: 'CO',
+        COLOMBIA: 'CO',
+        COLÔMBIA: 'CO',
+        URU: 'UY',
+        URUGUAI: 'UY',
+        CHI: 'CL',
+        CHILE: 'CL',
+      };
+
+      const isoCandidate = map[lookup] || (lookup.length === 2 ? lookup : '');
+
+      if (isoCandidate.length !== 2 || /[^A-Z]/.test(isoCandidate)) {
+        return '';
+      }
+
+      const codePoints = Array.from(isoCandidate).map((char) => 0x1F1E6 + char.charCodeAt(0) - 65);
+      return String.fromCodePoint(...codePoints);
+    }
+
+    loadSelectedGames();
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+</body>
+</html>

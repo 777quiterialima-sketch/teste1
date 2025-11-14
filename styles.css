@@ -1,0 +1,261 @@
+:root {
+  font-size: 16px;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background-color: #f8f9fa;
+  color: #212529;
+}
+
+.app-shell {
+  min-height: 100vh;
+}
+
+.sidebar {
+  min-width: 260px;
+  max-width: 260px;
+  background: linear-gradient(180deg, #111827 0%, #1f2937 100%);
+}
+
+.sidebar .brand-name {
+  font-weight: 700;
+  font-size: 1.5rem;
+}
+
+.sidebar .brand-name span {
+  color: #0d6efd;
+}
+
+.sidebar .brand-tagline {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.sidebar .nav-link {
+  border-radius: 0.75rem;
+  color: rgba(255, 255, 255, 0.75);
+  font-weight: 500;
+}
+
+.sidebar .nav-link:hover,
+.sidebar .nav-link.active {
+  color: #fff;
+  background-color: rgba(13, 110, 253, 0.35);
+}
+
+.sidebar .info-card {
+  background-color: rgba(15, 23, 42, 0.6);
+  border-radius: 1rem;
+  padding: 1.5rem;
+}
+
+.sidebar .info-card h2 {
+  font-size: 1.05rem;
+  color: #fff;
+}
+
+.sidebar .info-card li {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+main {
+  flex: 1;
+}
+
+.page-title {
+  font-weight: 600;
+}
+
+.page-subtitle {
+  color: #6c757d;
+}
+
+.summary-card-value {
+  font-size: 1.8rem;
+  font-weight: 600;
+}
+
+.summary-card-hint {
+  color: #6c757d;
+  font-size: 0.95rem;
+}
+
+.empty-state {
+  border: 1px dashed #ced4da;
+  border-radius: 0.75rem;
+  padding: 2.5rem 1rem;
+  text-align: center;
+  color: #6c757d;
+  background-color: #ffffff;
+}
+
+.games-table thead th {
+  white-space: nowrap;
+  background-color: #f1f5f9;
+}
+
+.games-table tbody td {
+  vertical-align: middle;
+}
+
+.games-table .form-check {
+  display: flex;
+  justify-content: center;
+}
+
+.games-table input[type='text'] {
+  min-width: 120px;
+}
+
+.game-day-section + .game-day-section {
+  margin-top: 2rem;
+}
+
+.game-day-title {
+  letter-spacing: 0.08em;
+  font-weight: 600;
+  color: #495057;
+}
+
+.badge-method {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.4rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-weight: 600;
+}
+
+.badge-goals {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.4rem 0.75rem;
+  border-radius: 999px;
+  background-color: #e9ecef;
+  color: #495057;
+  font-weight: 600;
+}
+
+.selected-item {
+  border: none;
+}
+
+.selected-item__main {
+  padding: 1.25rem 1.5rem;
+}
+
+.selected-item__flag {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.selected-item__flag--placeholder {
+  color: #adb5bd;
+}
+
+.selected-item__league-name {
+  font-weight: 600;
+}
+
+.selected-item__league-name--placeholder {
+  color: #adb5bd;
+}
+
+.selected-item__country {
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+.selected-item__country--placeholder {
+  color: transparent;
+}
+
+.selected-item__time {
+  font-weight: 500;
+  color: #495057;
+}
+
+.selected-item__time--placeholder {
+  color: #adb5bd;
+}
+
+.selected-item__match {
+  font-weight: 600;
+}
+
+.selected-item__details {
+  background-color: #f8fafc;
+  border-top: 1px solid #dee2e6;
+  padding: 1.25rem 1.5rem;
+}
+
+.selected-item__details[hidden] {
+  display: none;
+}
+
+.selected-day-section + .selected-day-section {
+  margin-top: 2rem;
+}
+
+.selected-day-title {
+  letter-spacing: 0.08em;
+  font-weight: 600;
+  color: #495057;
+}
+
+.details-list {
+  column-gap: 1.5rem;
+  row-gap: 0.75rem;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.details-list dt {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.details-list dd {
+  margin: 0 0 0.75rem;
+  color: #495057;
+}
+
+textarea.form-control {
+  font-family: 'JetBrains Mono', 'Fira Code', Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+}
+
+.preview-block {
+  background-color: #0d6efd10;
+  border: 1px solid rgba(13, 110, 253, 0.25);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  font-family: 'JetBrains Mono', 'Fira Code', Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  color: #0d1b2a;
+}
+
+.methods-list .list-group-item {
+  border-radius: 0.75rem;
+}
+
+.method-color-chip {
+  min-width: 88px;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0.4rem 0.75rem;
+  border-radius: 999px;
+  font-weight: 600;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+@media (max-width: 991.98px) {
+  .sidebar {
+    max-width: none;
+    width: 100%;
+  }
+
+  .app-shell {
+    flex-direction: column;
+  }
+}
