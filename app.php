@@ -41,6 +41,12 @@ switch ($uri) {
         }
         handleGetGames();
         break;
+    case '/games/dates':
+        if ($method !== 'GET') {
+            respondJson(405, ['message' => 'Método não permitido.']);
+        }
+        handleGetGameDates();
+        break;
     case '/games/selection':
         if ($method !== 'POST') {
             respondJson(405, ['message' => 'Método não permitido.']);
@@ -225,17 +231,47 @@ function handleGetGames(): void
 
     $selectedOnly = isset($_GET['selected']) && $_GET['selected'] === '1';
 
+    $dateFilter = null;
+    if (isset($_GET['date'])) {
+        try {
+            $dateFilter = normalizeMatchDate($_GET['date']);
+        } catch (InvalidArgumentException $exception) {
+            respondJson(400, ['message' => $exception->getMessage()]);
+        }
+    }
+
     $query = 'SELECT g.id, g.match_date, g.match_time, g.league, g.home_team, g.away_team, g.raw_data, g.selected, g.expected_goals, g.method, g.method_id, g.link, m.name AS method_name, m.color AS method_color
         FROM games g
         LEFT JOIN methods m ON m.id = g.method_id';
 
+    $conditions = [];
+    $params = [];
+
     if ($selectedOnly) {
-        $query .= ' WHERE g.selected = 1';
+        $conditions[] = 'g.selected = 1';
+    }
+
+    if ($dateFilter !== null) {
+        $conditions[] = 'g.match_date = :match_date';
+        $params[':match_date'] = $dateFilter;
+    }
+
+    if ($conditions !== []) {
+        $query .= ' WHERE ' . implode(' AND ', $conditions);
     }
 
     $query .= ' ORDER BY g.match_date, g.match_time, g.id';
 
-    $statement = $pdo->query($query);
+    if ($params === []) {
+        $statement = $pdo->query($query);
+    } else {
+        $statement = $pdo->prepare($query);
+        if ($statement === false) {
+            respondJson(500, ['message' => 'Não foi possível preparar a consulta de jogos.']);
+        }
+        $statement->execute($params);
+    }
+
     $records = $statement !== false ? $statement->fetchAll() : [];
 
     $games = [];
@@ -267,6 +303,27 @@ function handleGetGames(): void
         'headers' => loadHeaders(),
         'games' => $games,
     ]);
+}
+
+function handleGetGameDates(): void
+{
+    try {
+        $pdo = getDatabaseConnection();
+    } catch (Throwable $exception) {
+        respondJson(500, ['message' => 'Erro ao abrir o banco de dados.', 'detail' => $exception->getMessage()]);
+    }
+
+    $statement = $pdo->query('SELECT match_date, COUNT(*) AS total FROM games WHERE match_date IS NOT NULL GROUP BY match_date ORDER BY match_date');
+    $dates = $statement !== false ? $statement->fetchAll() : [];
+
+    $normalized = array_map(static function (array $row): array {
+        return [
+            'date' => isset($row['match_date']) ? (string) $row['match_date'] : '',
+            'total' => isset($row['total']) ? (int) $row['total'] : 0,
+        ];
+    }, $dates);
+
+    respondJson(200, ['dates' => $normalized]);
 }
 
 function handleSelectionUpdate(): void
