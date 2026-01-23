@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row g-4">
+  <div class="col-lg-6">
+    <div class="card card-welcome">
+      <div class="card-body">
+        <h4>Boa tarde, {{ current_user.name }}!</h4>
+        <p class="text-muted">Aqui está o resumo do seu mês.</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card card-summary">
+      <div class="card-body d-flex justify-content-between">
+        <div>
+          <span class="text-success">Receitas do mês</span>
+          <h4 class="text-success">R$ {{ '%.2f'|format(income) }}</h4>
+        </div>
+        <div>
+          <span class="text-danger">Despesas do mês</span>
+          <h4 class="text-danger">R$ {{ '%.2f'|format(expenses) }}</h4>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card card-balance">
+      <div class="card-body">
+        <span class="text-muted">Saldo geral</span>
+        <h3>R$ {{ '%.2f'|format(general_balance) }}</h3>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-body">
+        <h5>Minhas contas</h5>
+        <ul class="list-group list-group-flush">
+          {% for item in accounts %}
+          <li class="list-group-item d-flex justify-content-between">
+            <span>{{ item.account.name }} ({{ item.account.type }})</span>
+            <strong>R$ {{ '%.2f'|format(item.balance) }}</strong>
+          </li>
+          {% else %}
+          <li class="list-group-item">Nenhuma conta cadastrada.</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-body">
+        <h5>Meus cartões</h5>
+        <ul class="list-group list-group-flush">
+          {% for item in cards %}
+          <li class="list-group-item">
+            <div class="d-flex justify-content-between">
+              <div>
+                <strong>{{ item.card.name }}</strong> - {{ item.card.brand }}
+                <div class="text-muted">Limite disponível: R$ {{ '%.2f'|format(item.available_limit) }}</div>
+              </div>
+              <div>
+                <div>Fatura atual: R$ {{ '%.2f'|format(item.invoice_total) }}</div>
+                <a class="btn btn-sm btn-outline-success mt-2" href="{{ url_for('cards.view_invoice', card_id=item.card.id) }}">Ver fatura</a>
+              </div>
+            </div>
+          </li>
+          {% else %}
+          <li class="list-group-item">Nenhum cartão cadastrado.</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-5">
+    <div class="card">
+      <div class="card-body">
+        <h5>Conexões ativas</h5>
+        <ul class="list-group list-group-flush">
+          {% for connection in connections %}
+          <li class="list-group-item">{{ connection.provider_name }}</li>
+          {% else %}
+          <li class="list-group-item">Nenhuma conexão registrada.</li>
+          {% endfor %}
+        </ul>
+        <a class="btn btn-success mt-3" href="{{ url_for('connections.index') }}">Importar CSV</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

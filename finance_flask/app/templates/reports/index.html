@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3>Relatórios</h3>
+  <form method="get">
+    <input type="month" name="month" class="form-control" value="{{ '%04d-%02d'|format(year, month) }}">
+  </form>
+</div>
+<div class="row g-3">
+  <div class="col-lg-5">
+    <div class="card">
+      <div class="card-body">
+        <h5>Despesas por categoria</h5>
+        <canvas id="expenseChart"></canvas>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-body">
+        <h5>Receitas vs Despesas (últimos 6 meses)</h5>
+        <canvas id="trendChart"></canvas>
+      </div>
+    </div>
+  </div>
+  <div class="col-12">
+    <div class="card">
+      <div class="card-body">
+        <h5>Totais do mês</h5>
+        <table class="table">
+          <tr><th>Receitas</th><td>R$ {{ '%.2f'|format(income_total) }}</td></tr>
+          <tr><th>Despesas</th><td>R$ {{ '%.2f'|format(expense_total) }}</td></tr>
+          <tr><th>Saldo</th><td>R$ {{ '%.2f'|format(income_total - expense_total) }}</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const expenseLabels = {{ expenses|map(attribute=0)|list|tojson }};
+  const expenseValues = {{ expenses|map(attribute=1)|list|tojson }};
+  new Chart(document.getElementById('expenseChart'), {
+    type: 'pie',
+    data: {
+      labels: expenseLabels,
+      datasets: [{
+        data: expenseValues,
+        backgroundColor: ['#2d6a4f', '#40916c', '#74c69d', '#f77f00', '#d62828']
+      }]
+    }
+  });
+
+  new Chart(document.getElementById('trendChart'), {
+    type: 'bar',
+    data: {
+      labels: {{ months_labels|tojson }},
+      datasets: [
+        {
+          label: 'Receitas',
+          data: {{ income_series|tojson }},
+          backgroundColor: '#2d6a4f'
+        },
+        {
+          label: 'Despesas',
+          data: {{ expense_series|tojson }},
+          backgroundColor: '#d62828'
+        }
+      ]
+    }
+  });
+</script>
+{% endblock %}

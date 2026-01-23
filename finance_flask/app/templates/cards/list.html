@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3>Cartões</h3>
+  <a class="btn btn-success" href="{{ url_for('cards.new_card') }}">Novo cartão</a>
+</div>
+<div class="row g-3">
+  {% for card in cards %}
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-body">
+        <h5>{{ card.name }}</h5>
+        <p class="text-muted">{{ card.brand }} • Limite: R$ {{ '%.2f'|format(card.limit_total) }}</p>
+        <a class="btn btn-sm btn-outline-success" href="{{ url_for('cards.view_invoice', card_id=card.id) }}">Ver fatura</a>
+        <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('cards.edit_card', card_id=card.id) }}">Editar</a>
+        <form method="post" action="{{ url_for('cards.delete_card', card_id=card.id) }}" class="d-inline">
+          {{ csrf_token() }}
+          <button class="btn btn-sm btn-outline-danger" type="submit">Excluir</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="col-12">Nenhum cartão cadastrado.</div>
+  {% endfor %}
+</div>
+{% endblock %}

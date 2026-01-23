@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block content %}
+<h3 class="mb-3">Limite de Gastos</h3>
+<div class="card">
+  <div class="card-body">
+    <form method="post" action="{{ url_for('budgets.save') }}">
+      {{ csrf_token() }}
+      <div class="mb-3">
+        <label class="form-label">Mês</label>
+        <input type="month" name="month" class="form-control" value="{{ month }}">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Limite total</label>
+        <input type="number" step="0.01" name="total_budget" class="form-control" value="{{ total_budget.limit_amount if total_budget else '' }}">
+      </div>
+      <h5 class="mt-4">Limites por categoria</h5>
+      <div class="row">
+        {% for category in categories %}
+        <div class="col-md-4 mb-3">
+          <label class="form-label">{{ category.name }}</label>
+          <input type="number" step="0.01" name="category_{{ category.id }}" class="form-control" value="{{ budget_map.get(category.id).limit_amount if budget_map.get(category.id) else '' }}">
+        </div>
+        {% endfor %}
+      </div>
+      <button class="btn btn-success" type="submit">Salvar limites</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
