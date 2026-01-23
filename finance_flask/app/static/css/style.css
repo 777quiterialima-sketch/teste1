@@ -1,0 +1,46 @@
+body {
+  background-color: #f4f7f5;
+  font-family: "Inter", "Segoe UI", sans-serif;
+}
+
+.app-navbar {
+  background-color: #1b4332;
+}
+
+.card {
+  border: none;
+  border-radius: 16px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+}
+
+.card-welcome {
+  background: linear-gradient(135deg, #2d6a4f, #74c69d);
+  color: #fff;
+}
+
+.card-summary {
+  background: #fff;
+}
+
+.card-balance h3 {
+  color: #1b4332;
+}
+
+.table {
+  margin-bottom: 0;
+}
+
+.btn-success {
+  background-color: #2d6a4f;
+  border-color: #2d6a4f;
+}
+
+.btn-success:hover {
+  background-color: #1b4332;
+  border-color: #1b4332;
+}
+
+.list-group-item {
+  border: none;
+  border-bottom: 1px solid #e9ecef;
+}

@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3>Lançamentos</h3>
+  <a class="btn btn-success" href="{{ url_for('transactions.new_transaction') }}">Novo lançamento</a>
+</div>
+<div class="card mb-3">
+  <div class="card-body">
+    <form class="row g-2" method="get">
+      <div class="col-md-2">
+        <input type="month" name="month" class="form-control" value="{{ request.args.get('month', '') }}">
+      </div>
+      <div class="col-md-2">
+        <select name="account_id" class="form-select">
+          <option value="">Conta</option>
+          {% for account in accounts %}
+          <option value="{{ account.id }}" {% if request.args.get('account_id', type=int) == account.id %}selected{% endif %}>{{ account.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <select name="category_id" class="form-select">
+          <option value="">Categoria</option>
+          {% for category in categories %}
+          <option value="{{ category.id }}" {% if request.args.get('category_id', type=int) == category.id %}selected{% endif %}>{{ category.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <select name="type" class="form-select">
+          <option value="">Tipo</option>
+          <option value="income" {% if request.args.get('type') == 'income' %}selected{% endif %}>Receita</option>
+          <option value="expense" {% if request.args.get('type') == 'expense' %}selected{% endif %}>Despesa</option>
+          <option value="transfer" {% if request.args.get('type') == 'transfer' %}selected{% endif %}>Transferência</option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <input type="text" name="search" class="form-control" placeholder="Buscar" value="{{ request.args.get('search', '') }}">
+      </div>
+      <div class="col-md-1 d-grid">
+        <button class="btn btn-outline-success" type="submit">Filtrar</button>
+      </div>
+    </form>
+  </div>
+</div>
+<div class="card">
+  <div class="card-body">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Data</th>
+          <th>Descrição</th>
+          <th>Tipo</th>
+          <th>Valor</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for tx in transactions %}
+        <tr>
+          <td>{{ tx.date.strftime('%d/%m/%Y') }}</td>
+          <td>{{ tx.description }}</td>
+          <td>{{ tx.type }}</td>
+          <td>R$ {{ '%.2f'|format(tx.amount) }}</td>
+          <td class="text-end">
+            <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('transactions.edit_transaction', transaction_id=tx.id) }}">Editar</a>
+            <form method="post" action="{{ url_for('transactions.delete_transaction', transaction_id=tx.id) }}" class="d-inline">
+              {{ csrf_token() }}
+              <button class="btn btn-sm btn-outline-danger" type="submit">Excluir</button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5">Nenhum lançamento encontrado.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

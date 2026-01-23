@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3>Contas</h3>
+  <a class="btn btn-success" href="{{ url_for('accounts.new_account') }}">Nova conta</a>
+</div>
+<div class="card">
+  <div class="card-body">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>Tipo</th>
+          <th>Saldo</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in accounts %}
+        <tr>
+          <td>{{ item.account.name }}</td>
+          <td>{{ item.account.type }}</td>
+          <td>R$ {{ '%.2f'|format(item.balance) }}</td>
+          <td class="text-end">
+            <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('accounts.edit_account', account_id=item.account.id) }}">Editar</a>
+            <form method="post" action="{{ url_for('accounts.delete_account', account_id=item.account.id) }}" class="d-inline">
+              {{ csrf_token() }}
+              <button class="btn btn-sm btn-outline-danger" type="submit">Excluir</button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4">Nenhuma conta cadastrada.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

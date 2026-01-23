@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card">
+  <div class="card-body">
+    <h3 class="mb-3">{{ title }}</h3>
+    <form method="post">
+      {{ form.hidden_tag() }}
+      <div class="mb-3">
+        {{ form.name.label(class="form-label") }}
+        {{ form.name(class="form-control") }}
+      </div>
+      <div class="mb-3">
+        {{ form.type.label(class="form-label") }}
+        {{ form.type(class="form-select") }}
+      </div>
+      <div class="mb-3">
+        {{ form.opening_balance.label(class="form-label") }}
+        {{ form.opening_balance(class="form-control") }}
+      </div>
+      <button class="btn btn-success" type="submit">Salvar</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

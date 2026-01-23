@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h3>Fatura - {{ card.name }}</h3>
+    <p class="text-muted">{{ month }}/{{ year }}</p>
+  </div>
+  <a class="btn btn-outline-secondary" href="{{ url_for('cards.list_cards') }}">Voltar</a>
+</div>
+<div class="card mb-3">
+  <div class="card-body">
+    <h5>Total da fatura: R$ {{ '%.2f'|format(total) }}</h5>
+    {% if invoice and invoice.paid_at %}
+      <span class="badge text-bg-success">Pago em {{ invoice.paid_at.strftime('%d/%m/%Y') }}</span>
+    {% else %}
+      <span class="badge text-bg-warning">Em aberto</span>
+    {% endif %}
+  </div>
+</div>
+<div class="card mb-3">
+  <div class="card-body">
+    <h5>Itens</h5>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Data</th>
+          <th>Descrição</th>
+          <th>Valor</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in items %}
+        <tr>
+          <td>{{ item.date.strftime('%d/%m/%Y') }}</td>
+          <td>{{ item.description }}</td>
+          <td>R$ {{ '%.2f'|format(item.amount) }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="3">Nenhum item nesta fatura.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+<div class="card">
+  <div class="card-body">
+    <h5>Pagar fatura</h5>
+    <form method="post" action="{{ url_for('cards.pay_invoice', card_id=card.id) }}">
+      {{ form.hidden_tag() }}
+      <div class="row g-2 align-items-end">
+        <div class="col-md-6">
+          {{ form.payment_account_id.label(class="form-label") }}
+          {{ form.payment_account_id(class="form-select") }}
+        </div>
+        <div class="col-md-3">
+          {{ form.submit(class="btn btn-success") }}
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
