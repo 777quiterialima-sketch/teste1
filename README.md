@@ -15,12 +15,13 @@ Dashboard financeiro em PHP + MySQL inspirado no Organizze, pronto para hospedag
 
 2. **Envie os arquivos via FTP:**
    - Envie toda a pasta do projeto para `public_html/` (ou subpasta).
+   - Se instalar em **subpasta**, ajuste o `app_url` para incluir o caminho (ex.: `https://seudominio.com/organizze`).
 
 3. **Configure o arquivo de conexão:**
    - Copie `config/config.php.example` para `config/config.php`.
    - Preencha com as credenciais do banco e URL da aplicação:
      ```php
-     'app_url' => 'https://seudominio.com',
+     'app_url' => 'https://seudominio.com/organizze',
      'db' => [
          'host' => 'localhost',
          'name' => 'seu_banco',

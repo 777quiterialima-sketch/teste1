@@ -26,7 +26,12 @@ set_exception_handler(function (Throwable $e): void {
     view('errors/500', ['title' => 'Erro interno']);
 });
 
-$path = trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
+$requestPath = trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
+$basePath = trim(dirname($_SERVER['SCRIPT_NAME']), '/');
+$path = $requestPath;
+if ($basePath && str_starts_with($requestPath, $basePath)) {
+    $path = trim(substr($requestPath, strlen($basePath)), '/');
+}
 $method = $_SERVER['REQUEST_METHOD'];
 
 $authController = new AuthController();
