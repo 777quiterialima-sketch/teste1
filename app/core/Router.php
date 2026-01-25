@@ -22,6 +22,12 @@ class Router
     public function dispatch(string $method, string $uri): void
     {
         $path = parse_url($uri, PHP_URL_PATH);
+        $basePath = rtrim(config('base_path', ''), '/');
+        if ($basePath && strpos($path, $basePath) === 0) {
+            $path = substr($path, strlen($basePath));
+        }
+        $path = '/' . ltrim($path, '/');
+
         foreach ($this->routes as $route) {
             $pattern = "#^" . preg_replace('#\{[a-zA-Z_]+\}#', '([\\w-]+)', $route['path']) . "$/";
             if ($route['method'] === $method && preg_match($pattern, $path, $matches)) {

@@ -52,6 +52,9 @@ Sistema web em PHP 8+ + MySQL para controle financeiro pessoal, pronto para hosp
 2. **Configure o arquivo `config/config.php`**
    - Copie `config/config.php.example` para `config/config.php`.
    - Preencha com o host, banco, usuário e senha.
+   - Se a aplicação estiver em subpasta (ex: `https://seudominio.com/financeiro`), defina:
+     - `base_url` como `https://seudominio.com/financeiro`
+     - `base_path` como `/financeiro`
 
 3. **Importe o schema**
    - No cPanel, acesse **phpMyAdmin**.
