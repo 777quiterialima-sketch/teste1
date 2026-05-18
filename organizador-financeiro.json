@@ -1,0 +1,128 @@
+{
+  "organizador_financeiro": {
+    "versao": "1.0",
+    "mes_referencia": "[MÊS/ANO]",
+    "atualizado_em": "[DATA]",
+
+    "dashboard": {
+      "renda_total": 0,
+      "despesas_fixas": 0,
+      "despesas_variaveis": 0,
+      "investimentos_metas": 0,
+      "saldo_livre": 0,
+      "percentual_economizado": 0
+    },
+
+    "categorias": {
+      "essenciais": {
+        "descricao": "Necessidades básicas — sugestão: até 50% da renda",
+        "items": [
+          { "nome": "Habitação",               "limite_sugerido_pct": 28, "limite_pessoal": 0, "gasto_real": 0 },
+          { "nome": "Alimentação",             "limite_sugerido_pct": 12, "limite_pessoal": 0, "gasto_real": 0 },
+          { "nome": "Transporte",              "limite_sugerido_pct": 12, "limite_pessoal": 0, "gasto_real": 0 },
+          { "nome": "Saúde",                   "limite_sugerido_pct": 8,  "limite_pessoal": 0, "gasto_real": 0 },
+          { "nome": "Contas (luz/água/internet)","limite_sugerido_pct": 5, "limite_pessoal": 0, "gasto_real": 0 }
+        ]
+      },
+      "estilo_de_vida": {
+        "descricao": "Conforto e lazer — sugestão: até 30% da renda",
+        "items": [
+          { "nome": "Compras / Roupas",        "limite_sugerido_pct": 7,  "limite_pessoal": 0, "gasto_real": 0 },
+          { "nome": "Lazer / Entretenimento",  "limite_sugerido_pct": 7,  "limite_pessoal": 0, "gasto_real": 0 },
+          { "nome": "Delivery / Restaurantes", "limite_sugerido_pct": 5,  "limite_pessoal": 0, "gasto_real": 0 },
+          { "nome": "Educação / Cursos",       "limite_sugerido_pct": 4,  "limite_pessoal": 0, "gasto_real": 0 },
+          { "nome": "Viagens / Passeios",      "limite_sugerido_pct": 4,  "limite_pessoal": 0, "gasto_real": 0 },
+          { "nome": "Presentes / Social",      "limite_sugerido_pct": 3,  "limite_pessoal": 0, "gasto_real": 0 }
+        ]
+      },
+      "metas_e_futuro": {
+        "descricao": "Investir no futuro — sugestão: pelo menos 20% da renda",
+        "items": [
+          { "nome": "Reserva de emergência",   "limite_sugerido_pct": 10, "limite_pessoal": 0, "gasto_real": 0 },
+          { "nome": "Meta específica #1",      "limite_sugerido_pct": 0,  "limite_pessoal": 0, "gasto_real": 0 },
+          { "nome": "Meta específica #2",      "limite_sugerido_pct": 0,  "limite_pessoal": 0, "gasto_real": 0 },
+          { "nome": "Investimentos",           "limite_sugerido_pct": 0,  "limite_pessoal": 0, "gasto_real": 0 }
+        ]
+      }
+    },
+
+    "rastreador_gastos": {
+      "semana_1": { "periodo": "01-07", "limite": 0, "total_gasto": 0, "registros": [] },
+      "semana_2": { "periodo": "08-14", "limite": 0, "total_gasto": 0, "registros": [] },
+      "semana_3": { "periodo": "15-21", "limite": 0, "total_gasto": 0, "registros": [] },
+      "semana_4": { "periodo": "22-31", "limite": 0, "total_gasto": 0, "registros": [] }
+    },
+
+    "registro_gasto_exemplo": {
+      "data": "DD/MM/AAAA",
+      "descricao": "Descrição do gasto",
+      "categoria": "Nome da categoria",
+      "valor": 0,
+      "essencial": true
+    },
+
+    "metas": [
+      {
+        "prioridade": 1,
+        "nome": "[META PRIORITÁRIA]",
+        "valor_total": 0,
+        "prazo_meses": 0,
+        "prazo_data": "[MÊS/ANO]",
+        "economia_mensal": 0,
+        "valor_acumulado": 0,
+        "percentual_concluido": 0
+      },
+      {
+        "prioridade": 2,
+        "nome": "[META SECUNDÁRIA]",
+        "valor_total": 0,
+        "prazo_meses": 0,
+        "prazo_data": "[MÊS/ANO]",
+        "economia_mensal": 0,
+        "valor_acumulado": 0,
+        "percentual_concluido": 0
+      },
+      {
+        "prioridade": 3,
+        "nome": "[META LONGO PRAZO]",
+        "valor_total": 0,
+        "prazo_meses": 0,
+        "prazo_data": "[MÊS/ANO]",
+        "economia_mensal": 0,
+        "valor_acumulado": 0,
+        "percentual_concluido": 0
+      }
+    ],
+
+    "habitos": {
+      "semanais": [
+        "Registrar todos os gastos",
+        "Conferir o saldo disponível",
+        "Evitar ao menos 1 compra por impulso",
+        "Trazer lanche/almoço de casa ao menos 2x"
+      ],
+      "mensais": [
+        "Atualizar o Dashboard antes do dia 5",
+        "Pagar todas as contas na data",
+        "Transferir o valor da meta financeira",
+        "Revisar assinaturas ativas",
+        "Comparar gastos com o mês anterior",
+        "Celebrar alguma vitória financeira"
+      ],
+      "anuais": [
+        "Rever metas e ajustar para o novo ano",
+        "Negociar contratos fixos",
+        "Verificar restituição de imposto de renda",
+        "Calcular patrimônio líquido",
+        "Revisar cartão de crédito"
+      ]
+    },
+
+    "retrospectiva": {
+      "o_que_funcionou": "",
+      "onde_gastei_mais": "",
+      "o_que_fazer_diferente": "",
+      "pontuacao_do_mes": 0
+    }
+  }
+}
